@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Text,
-} from 'react-native';
+import {View, StyleSheet, FlatList, TouchableOpacity, Text} from 'react-native';
 import BlogCard from '../BlogCard/BlogCard';
 
 const BlogList = () => {
@@ -49,11 +43,16 @@ const BlogList = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        {blogs.map(item => (
-          <BlogCard key={item.id} item={item} />
-        ))}
-      </ScrollView>
+      <FlatList
+        data={blogs}
+        keyExtractor={item => item.id}
+        numColumns={2} // Ensures two cards per row
+        renderItem={({item}) => (
+          <View style={styles.cardContainer}>
+            <BlogCard item={item} />
+          </View>
+        )}
+      />
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>View All</Text>
@@ -66,6 +65,11 @@ const BlogList = () => {
 const styles = StyleSheet.create({
   container: {
     marginTop: 10,
+    flex: 1,
+  },
+  cardContainer: {
+    flex: 1,
+    margin: 5, // Adjust margin for spacing
   },
   buttonContainer: {
     alignItems: 'center',
@@ -73,11 +77,13 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#f50057',
-    borderRadius: 2,
+    borderRadius: 5,
     padding: 10,
   },
   buttonText: {
     color: 'white',
+
+    fontWeight: '600',
   },
 });
 

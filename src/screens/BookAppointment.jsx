@@ -28,6 +28,7 @@ const BookAppointmentCheckBox = () => {
 };
 
 const BookAppointment = () => {
+  const navigation = useNavigation();
   const {
     register,
     handleSubmit,
@@ -39,6 +40,7 @@ const BookAppointment = () => {
   const {patient} = useStoreState(state => state.patient);
   const {user} = useStoreState(state => state.user);
   const {doctorId} = useRoute().params;
+  console.log(doctorId);
 
   const [dateValue, setDateValue] = useState(new Date());
   const [timeValue, setTimeValue] = useState(null);
@@ -81,9 +83,8 @@ const BookAppointment = () => {
       height: data.height,
       weight: data.weight,
     };
-
-    // Navigate to the payment page with the payload
-    // Add your navigation logic here
+    // resetPercentage();
+    navigation.navigate('PaymentPage', {state: payload});
   };
 
   if (!singleDoctor) {

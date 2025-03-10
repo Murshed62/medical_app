@@ -26,7 +26,7 @@ const ServiceCard = ({item}) => {
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('ServiceDetail', {item})}>
+      onPress={() => navigation.navigate('Dashboard', {item})}>
       <Image style={styles.media} source={{uri: item.img}} resizeMode="cover" />
       <View style={styles.content}>
         <Text style={styles.title}>{item.title}</Text>

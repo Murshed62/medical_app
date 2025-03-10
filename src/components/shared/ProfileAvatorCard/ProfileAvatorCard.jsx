@@ -17,7 +17,7 @@ export const ProfileAvatorCard = ({item}) => {
   const {updateDoctorImage} = useStoreActions(action => action.doctor);
   const {updatePatientImage} = useStoreActions(action => action.patient);
   const {user} = useStoreState(state => state.user);
-  const userID = item._id;
+  const userID = item?._id;
 
   const onSubmit = async data => {
     const formData = new FormData();

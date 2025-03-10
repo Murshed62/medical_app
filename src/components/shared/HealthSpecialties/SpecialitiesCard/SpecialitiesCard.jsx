@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, {useState} from 'react';
+import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import DoctorProfileModal from '../../../../modal/DoctorProfileModal';
 
-const SpecialitiesCard = ({ item }) => {
+const SpecialitiesCard = ({item, isSingle}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
 
@@ -16,12 +16,12 @@ const SpecialitiesCard = ({ item }) => {
   };
 
   const handleBookNow = () => {
-    navigation.navigate('BookAppointment', { doctorId: item._id }); // Pass doctorId
+    navigation.navigate('BookAppointment', {doctorId: item?._id});
   };
 
   return (
-    <View style={styles.card}>
-      <Image style={styles.image} source={{ uri: item.profile }} />
+    <View style={[styles.card, isSingle && styles.singleCard]}>
+      <Image style={styles.image} source={{uri: item.profile}} />
       <Text style={styles.title}>
         {item.firstName} {item.lastName}
       </Text>
@@ -61,11 +61,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    width: '47%',
-    height: '95%',
+    width: '47%', // Default for multiple cards
+    minWidth: 160, // Prevent shrinking too much
+  },
+  singleCard: {
+    width: '100%', // Full width when only one card exists
+    alignSelf: 'center', // Center the single card
   },
   image: {
     width: 100,
@@ -77,11 +81,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 5,
+    textAlign: 'center',
   },
   text: {
     fontSize: 14,
     color: 'gray',
     marginBottom: 5,
+    textAlign: 'center',
   },
   fee: {
     fontSize: 16,

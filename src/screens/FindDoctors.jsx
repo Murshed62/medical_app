@@ -75,7 +75,7 @@ const FilterSection = ({specialty, handleFilterValue}) => {
         {filterDoctor?.length} doctors are available
       </Text>
       <View>
-        <HealthSpecialitiesList filterDoctor={filterDoctor} />
+        <HealthSpecialitiesList filterDoctor={filterDoctor} home="true"/>
       </View>
     </ScrollView>
   );

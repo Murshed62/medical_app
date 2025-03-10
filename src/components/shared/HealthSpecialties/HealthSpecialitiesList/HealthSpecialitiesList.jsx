@@ -14,18 +14,23 @@ const HealthSpecialitiesList = ({home, filterDoctor}) => {
     );
   }
 
+  const isSingle = filterDoctor.length === 1;
   const cardItem = home ? filterDoctor.slice(0, 8) : filterDoctor;
+  const listKey = isSingle ? 'single' : 'multiple'; // 🔥 Forces re-render when changing numColumns
 
   return (
     <View style={styles.container}>
       <FlatList
+        key={listKey} // 🔥 Forces re-render when number of columns changes
         data={cardItem}
-        renderItem={({item}) => <SpecialitiesCard item={item} />}
-        keyExtractor={item => item?.id?.toString()}
-        numColumns={2} // Based on sm={6} which typically means half width
+        renderItem={({item}) => (
+          <SpecialitiesCard item={item} isSingle={isSingle} />
+        )}
+        keyExtractor={item => item?._id?.toString()}
+        numColumns={isSingle ? 1 : 2} // ✅ Dynamically handled
         contentContainerStyle={styles.list}
       />
-      {home && filterDoctor.length !== 0 && (
+      {home && filterDoctor.length > 8 && (
         <View style={styles.viewAllButtonContainer}>
           <TouchableOpacity
             style={styles.button}
@@ -58,7 +63,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   button: {
-    backgroundColor: '#f50057', // secondary color approximation
+    backgroundColor: '#f50057', // Secondary color
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 2,

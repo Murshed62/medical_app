@@ -11,13 +11,12 @@ import {
 // Remove empty fields from form data
 const checkUpdatedData = data => {
   return Object.keys(data).reduce((acc, key) => {
-    if (data[key].length !== 0) {
+    if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
       acc[key] = data[key];
     }
     return acc;
   }, {});
 };
-
 // Get unique specialty names from an array of doctors
 const specialityName = data => {
   if (!data) return [];

@@ -43,7 +43,8 @@ const userModel = {
   addRegisterError: action((state, payload) => {
     state.registerError = payload;
   }),
-  registerUser: thunk(async (actions, {formData, navigate, credential}) => {
+  registerUser: thunk(async (actions, {formData, credential, navigation}) => {
+    console.log(credential);
     try {
       const {data} = await axios.post(
         'https://api.surelinehealth.com/api/register',
@@ -51,8 +52,10 @@ const userModel = {
         {headers: {'Content-Type': 'multipart/form-data'}},
       );
       ToastAndroid.show(data.message, ToastAndroid.SHORT);
+      console.log(data);
+
       if (data.success) {
-        navigate(`/otp-verification/${credential}`);
+        navigation.navigate('OtpVerification', {credential});
       }
     } catch (e) {
       ToastAndroid.show(e?.response?.data.message, ToastAndroid.SHORT);
@@ -60,12 +63,14 @@ const userModel = {
     }
   }),
 
-  otpVerify: thunk(async (actions, {verifyingData, navigate}) => {
+  otpVerify: thunk(async (actions, {verifyingData, navigation}) => {
+    console.log(verifyingData);
     try {
       const {data} = await axios.post(
         'https://api.surelinehealth.com/api/otp-verification',
         verifyingData,
       );
+      console.log(data);
       if (data.success) {
         if (data?.user?.role === 'patient') {
           ToastAndroid.show(data.message, ToastAndroid.SHORT);
@@ -73,14 +78,14 @@ const userModel = {
           actions.addIslogIn(true);
           await AsyncStorage.setItem('token', data.token);
           await AsyncStorage.setItem('user', JSON.stringify(data.user));
-          navigate('/');
+          navigation.navigate('TabNavigator');
         }
         if (data?.user?.role === 'doctor') {
           ToastAndroid.show(
             'Successfully Created New Doctor Account.',
             ToastAndroid.SHORT,
           );
-          navigate('/');
+          navigation.navigate('TabNavigator');
         }
       }
     } catch (error) {
@@ -104,6 +109,7 @@ const userModel = {
         ToastAndroid.show(data.message, ToastAndroid.SHORT);
         actions.addUser(data.user);
         actions.addIslogIn(true);
+        console.log(data);
 
         await AsyncStorage.setItem('token', data.token);
         await AsyncStorage.setItem('user', JSON.stringify(data.user));
@@ -132,22 +138,33 @@ const userModel = {
     state.isLogoutUser = true;
   }),
 
-  logoutUser: thunk(async (actions, {token, navigate}) => {
-    const {data} = await axios.get(
-      'https://api.surelinehealth.com/api/logout',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  logoutUser: thunk(async (actions, {navigation, token}) => {
+    try {
+      const {data} = await axios.get(
+        'https://api.surelinehealth.com/api/logout',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      },
-    );
+      );
 
-    if (data.success) {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      actions.addLogoutData();
-      ToastAndroid.show(data.message, ToastAndroid.SHORT);
-      navigate('/');
+      if (data.success) {
+        // Remove token and user data from AsyncStorage
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+
+        // Update Redux state or context
+        actions.addLogoutData();
+
+        // Show a success toast message
+        ToastAndroid.show(data.message, ToastAndroid.SHORT);
+
+        // Navigate to Login or Home screen
+        navigation.navigate('TabNavigator'); // Change 'Login' to the correct screen name
+      }
+    } catch (error) {
+      console.error('Logout Error:', error);
     }
   }),
 
@@ -228,7 +245,7 @@ const doctorModel = {
   }),
   getDoctorById: thunk(async (actions, payload) => {
     const {data} = await axios.get(
-      'https://api.surelinehealth.com/api/doctors/${payload}',
+      `https://api.surelinehealth.com/api/doctors/${payload}`,
     );
     actions.addDoctor(data);
   }),
@@ -238,7 +255,7 @@ const doctorModel = {
   updatedAppointment: thunk(async (actions, payload) => {
     const {userID, appointmentID, patientID} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/doctorAppointment/${userID}',
+      `https://api.surelinehealth.com/api/doctorAppointment/${userID}`,
       {
         appointmentID,
         patientID,
@@ -253,7 +270,7 @@ const doctorModel = {
     const {userID, updatedFormData} = payload;
     console.log(userID, updatedFormData);
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/doctors/${userID}',
+      `https://api.surelinehealth.com/api/doctors/${userID}`,
       updatedFormData,
     );
     actions.addUpdatedProrileData(data);
@@ -264,7 +281,7 @@ const doctorModel = {
   updateDoctorImage: thunk(async (actions, payload) => {
     const {userID, formData} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/doctorImage/${userID}',
+      `https://api.surelinehealth.com/api/doctorImage/${userID}`,
       formData,
       {
         headers: {'Content-Type': 'multipart/form-data'},
@@ -277,7 +294,7 @@ const doctorModel = {
   }),
   getSingleDoctor: thunk(async (actions, payload) => {
     const {data} = await axios.get(
-      'https://api.surelinehealth.com/api/doctors/${payload}',
+      `https://api.surelinehealth.com/api/doctors/${payload}`,
     );
     actions.addSingleDoctor(data);
   }),
@@ -287,7 +304,7 @@ const doctorModel = {
   updateSchedule: thunk(async (actions, payload) => {
     const {doctorID, schedule} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/doctorSchedule/${doctorID}',
+      `https://api.surelinehealth.com/api/doctorSchedule/${doctorID}`,
       {
         schedule,
       },
@@ -326,14 +343,14 @@ const doctorModel = {
   addNewSlot: thunk(async (actions, payload) => {
     const {doctorID, scheduleID} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/doctors/${doctorID}/schedule/${scheduleID}',
+      `https://api.surelinehealth.com/api/doctors/${doctorID}/schedule/${scheduleID}`,
     );
     actions.addStatusData(data);
   }),
   deleteSlot: thunk(async (actions, payload) => {
     const {doctorID, scheduleID, slotID} = payload;
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/doctors/${doctorID}/schedule/${scheduleID}/slot/${slotID}',
+      `https://api.surelinehealth.com/api/doctors/${doctorID}/schedule/${scheduleID}/slot/${slotID}`,
     );
     actions.addStatusData(data);
   }),
@@ -343,7 +360,7 @@ const doctorModel = {
   deleteDoctor: thunk(async (actions, payload) => {
     const {id} = payload;
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/users/${id}',
+      `https://api.surelinehealth.com/api/users/${id}`,
     );
     actions.addDeleteDoctorData(data);
   }),
@@ -358,9 +375,11 @@ const patientModel = {
     state.patient = payload;
   }),
   getPatient: thunk(async (actions, payload) => {
+    console.log(payload);
     const {data} = await axios.get(
-      'https://api.surelinehealth.com/api/patient/${payload}',
+      `https://api.surelinehealth.com/api/patient/${payload}`,
     );
+    console.log('action er age', data);
     actions.addPatient(data);
   }),
 
@@ -370,7 +389,7 @@ const patientModel = {
   deletePatientAppointment: thunk(async (actions, payload) => {
     const {patientID, appointmentID, doctorID} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/patientAppointment/${patientID}',
+      `https://api.surelinehealth.com/api/patientAppointment/${patientID}`,
       {
         appointmentID,
         doctorID,
@@ -385,7 +404,7 @@ const patientModel = {
     const id = payload.userID;
     const formData = payload.updatedFormData;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/patient/${id}',
+      `https://api.surelinehealth.com/api/patient/${id}`,
       formData,
     );
     actions.addUpdatedData(data);
@@ -396,7 +415,7 @@ const patientModel = {
   updatePatientImage: thunk(async (actions, payload) => {
     const {userID, formData} = payload;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/patientImage/${userID}',
+      `https://api.surelinehealth.com/api/patientImage/${userID}`,
       formData,
       {
         headers: {'Content-Type': 'multipart/form-data'},
@@ -414,7 +433,7 @@ const testRecommendationModel = {
   }),
   uploadTestResult: thunk(async (actions, {id, formData}) => {
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/testRecommendations/${id}',
+      `https://api.surelinehealth.com/api/testRecommendations/${id}`,
       formData,
       {
         headers: {'Content-Type': 'multipart/form-data'},
@@ -442,7 +461,7 @@ const testRecommendationModel = {
   }),
   deleteTest: thunk(async (actions, payload) => {
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/testRecommendations/${payload}',
+      `https://api.surelinehealth.com/api/testRecommendations/${payload}`,
     );
     actions.addDeletedData(data);
   }),
@@ -459,7 +478,7 @@ const prescriptionModel = {
   }),
   medicinDelete: thunk(async (actions, payload) => {
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/medicinInstructions/${payload}',
+      `https://api.surelinehealth.com/api/medicinInstructions/${payload}`,
     );
     actions.addDeletedMedicin(data);
   }),
@@ -485,7 +504,7 @@ const prescriptionModel = {
     const {id} = payload;
     const {diagnosis} = payload.data;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/prescriptions/${id}',
+      `https://api.surelinehealth.com/api/prescriptions/${id}`,
       {
         diagnosis,
       },
@@ -517,7 +536,7 @@ const prescriptionModel = {
     const {prescriptionID} = payload;
     const {instruction} = payload.data;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/prescriptions/${prescriptionID}',
+      `https://api.surelinehealth.com/api/prescriptions/${prescriptionID}`,
       {
         instruction,
       },
@@ -551,7 +570,7 @@ const appointmentModel = {
     const {appointmentID, reqApplyedID, date, time} = payload;
     const {googleMeetLink} = payload.data;
     const {data} = await axios.patch(
-      'https://api.surelinehealth.com/api/appointments/${appointmentID}',
+      `https://api.surelinehealth.com/api/appointments/${appointmentID}`,
       {
         date,
         time,
@@ -573,7 +592,7 @@ const appointmentModel = {
   }),
   getAppointmentByid: thunk(async (actions, payload) => {
     const {data} = await axios.get(
-      'https://api.surelinehealth.com/api/appointments/${payload}',
+      `https://api.surelinehealth.com/api/appointments/${payload}`,
     );
     actions.addGetAppointmentById(data);
   }),
@@ -585,7 +604,7 @@ const applyedAppointmentModel = {
   }),
   deleteApplyedData: thunk(async (actions, payload) => {
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/applyForAppointments/${payload}',
+      `https://api.surelinehealth.com/api/applyForAppointments/${payload}`,
     );
     actions.addDeletedData(data);
   }),
@@ -657,7 +676,7 @@ const adminModel = {
   }),
   deleteUser: thunk(async (actions, payload) => {
     const {data} = await axios.delete(
-      'https://api.surelinehealth.com/api/users/${payload}',
+      `https://api.surelinehealth.com/api/users/${payload}`,
     );
     actions.addDeletedData(data);
   }),
@@ -728,7 +747,7 @@ const promoCodeModel = {
   deletePromoCode: thunk(async (actions, {id}) => {
     try {
       const {data} = await axios.delete(
-        'https://api.surelinehealth.com/api/promoCodes/${id}',
+        `https://api.surelinehealth.com/api/promoCodes/${id}`,
       );
       // console.log(data);
       actions.addDeletedData(data);
@@ -744,7 +763,7 @@ const promoCodeModel = {
   updatePromoCode: thunk(async (actions, {id, data: updateData}) => {
     try {
       const {data} = await axios.patch(
-        'https://api.surelinehealth.com/api/promoCodes/${id}',
+        `https://api.surelinehealth.com/api/promoCodes/${id}`,
         updateData,
       );
       actions.addUpdatedData(data);

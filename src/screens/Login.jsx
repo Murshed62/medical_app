@@ -1,133 +1,88 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ToastAndroid,
+  StyleSheet,
 } from 'react-native';
-import {useForm} from 'react-hook-form';
-import {useStoreActions, useStoreState} from 'easy-peasy';
+import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/native';
-import {isValidEmailOrPhone} from '../utils/index.js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useStoreActions} from 'easy-peasy';
 
-const Login = () => {
-  const {initializeUser} = useStoreActions(action => action.user);
-  const {user} = useStoreState(state => state.user);
-  // const userID = user?._id;
+const LoginScreen = () => {
   const {
-    register,
+    control,
     handleSubmit,
-    setValue,
-    getValues,
     formState: {errors},
   } = useForm();
-  const {loginUser} = useStoreActions(action => action.user);
+  const loginUser = useStoreActions(actions => actions.user.loginUser);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    initializeUser();
-    register('credential', {
-      required: 'This field is required',
-      validate: value =>
-        isValidEmailOrPhone(value) ||
-        'Enter a valid email or 11-digit phone number',
-    });
-    register('password', {required: 'Password is required'});
-  }, [register, initializeUser]);
-
   const onSubmit = async data => {
-    console.log('Form Data Before Sending:', data);
-
-    // Ensure the backend receives the correct field names
     const loginData = {
-      credential: data.credential, // Keep it as 'credential' if the backend expects this, otherwise change it to 'email'
+      credential: data.credential,
       password: data.password,
     };
 
-    console.log('Login Data Being Sent:', loginData); // Debugging
-
-    const response = await loginUser({
+    loginUser({
       loginData,
-      from: 'DashboardStack',
+      from: 'TabNavigator',
       navigate: navigation,
     });
-
-    console.log('Server Response:', response); // Debugging
-
-    if (response.success && response.user) {
-      try {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
-        ToastAndroid.show('Login successful', ToastAndroid.SHORT);
-
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'DashboardStack'}],
-        });
-      } catch (error) {
-        console.error('Error storing user data:', error);
-      }
-    } else {
-      ToastAndroid.show(response.message || 'Login failed', ToastAndroid.SHORT);
-      console.log('Login Error:', response.message);
-    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Login Now</Text>
+      <Text style={styles.title}>Login Now</Text>
 
-        <View style={styles.inputGroup}>
+      <Controller
+        control={control}
+        rules={{required: 'Email or phone is required'}}
+        render={({field: {onChange, value}}) => (
           <TextInput
-            style={[styles.input, errors.credential && styles.errorInput]}
+            style={styles.input}
             placeholder="Email or Phone"
-            onChangeText={text => setValue('credential', text)}
-            value={getValues('credential')}
-            autoCapitalize="none"
-            keyboardType="email-address"
+            onChangeText={onChange}
+            value={value}
           />
-          {errors.credential && (
-            <Text style={styles.errorText}>{errors.credential.message}</Text>
-          )}
-        </View>
+        )}
+        name="credential"
+      />
+      {errors.credential && (
+        <Text style={styles.errorText}>{errors.credential.message}</Text>
+      )}
 
-        <View style={styles.inputGroup}>
+      <Controller
+        control={control}
+        rules={{required: 'Password is required'}}
+        render={({field: {onChange, value}}) => (
           <TextInput
-            style={[styles.input, errors.password && styles.errorInput]}
+            style={styles.input}
             placeholder="Password"
             secureTextEntry
-            onChangeText={text => setValue('password', text)}
-            value={getValues('password')}
+            onChangeText={onChange}
+            value={value}
           />
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password.message}</Text>
-          )}
-        </View>
+        )}
+        name="password"
+      />
+      {errors.password && (
+        <Text style={styles.errorText}>{errors.password.message}</Text>
+      )}
 
-        <TouchableOpacity
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={styles.linkText}>Forgot your password?</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={handleSubmit(onSubmit)} style={styles.button}>
+        <Text style={styles.buttonText}>Log in</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSubmit(onSubmit)}>
-          <Text style={styles.buttonText}>Log in</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+        <Text style={styles.linkText}>Forgot your password?</Text>
+      </TouchableOpacity>
 
-        <Text style={styles.signupText}>
-          Don't have an account?{' '}
-          <Text
-            style={styles.linkText}
-            onPress={() => navigation.navigate('Register')}>
-            Create account
-          </Text>
-        </Text>
-      </View>
+      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <Text style={styles.linkText}>Don't have an account? Create one</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -138,69 +93,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    textAlign: 'center',
-  },
-  inputGroup: {
-    marginBottom: 15,
   },
   input: {
+    width: '100%',
+    height: 50,
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    padding: 10,
-    fontSize: 16,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  errorInput: {
-    borderColor: 'red',
+  button: {
+    backgroundColor: '#007BFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkText: {
+    color: '#007BFF',
+    marginTop: 10,
   },
   errorText: {
     color: 'red',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#1976d2',
-    borderRadius: 4,
-    padding: 14,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  signupText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-  },
-  linkText: {
-    color: '#1976d2',
-    fontWeight: '600',
+    marginBottom: 10,
   },
 });
 
-export default Login;
+export default LoginScreen;

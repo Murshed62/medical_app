@@ -15,8 +15,12 @@ import ImageCarousel from '../components/shared/ImageCarousel/ImageCarousel';
 import Services from '../components/shared/Services/Services';
 import HealthConcerns from '../components/shared/HealthConcerns/HealthConcerns';
 import HealthSpecialties from '../components/shared/HealthSpecialties/HealthSpecialties';
+import HomeBlogs from '../components/shared/HomeBlogs/HomeBlogs';
+import {useStoreState} from 'easy-peasy';
 
 const Dashboard = () => {
+  const {user} = useStoreState(state => state.user);
+  console.log('Dashboard user', user);
   const navigation = useNavigation();
   const [scrollY, setScrollY] = useState(new Animated.Value(0));
 
@@ -53,7 +57,13 @@ const Dashboard = () => {
         {/* User Icon */}
         <TouchableOpacity
           style={styles.iconContainer}
-          onPress={() => navigation.navigate('MyProfile')}>
+          onPress={() => {
+            if (user) {
+              navigation.navigate('MyProfile');
+            } else {
+              navigation.navigate('TabNavigator');
+            }
+          }}>
           <Image source={userIcon} style={styles.userIcon} />
         </TouchableOpacity>
 
@@ -82,6 +92,7 @@ const Dashboard = () => {
         <Services />
         <HealthConcerns />
         <HealthSpecialties />
+        <HomeBlogs />
       </Animated.ScrollView>
     </View>
   );

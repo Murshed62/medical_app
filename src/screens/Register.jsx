@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
 import {useStoreActions, useStoreState} from 'easy-peasy';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {isValidEmailOrPhone} from '../utils/index.js';
 
 const Register = () => {
@@ -33,10 +33,9 @@ const Register = () => {
       formData.append('credential', credential);
       formData.append('password', confirmPassword);
 
-      await registerUser({formData, credential, navigation}); // Ensure this function is async if necessary
+      registerUser({formData, credential, navigation}); // Ensure this function is async if necessary
 
       // Navigate to OTP verification
-      navigation.navigate('OtpVerification');
     } catch (error) {
       console.error('Error registering user:', error);
       // Handle error (e.g., show a message or something)

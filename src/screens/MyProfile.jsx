@@ -13,75 +13,75 @@ import ProfileAvatorCard from '../components/shared/ProfileAvatorCard/ProfileAva
 import EditPatientProfile from '../components/shared/EditPatientProfile/EditPatientProfile';
 import ChangePassword from '../components/shared/ChangePassword/ChangePassword';
 import OpenModal from '../modal/OpenModal';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileDetails = ({patient}) => {
-  // console.log('patient variable', patient);
+  console.log('patient variable', patient);
   const {user} = useStoreState(state => state.user);
 
+  if (!patient) {
+    return null;
+  }
   return (
     <View style={styles.profileDetailsContainer}>
       <Text style={styles.headerText}>Profile Details:</Text>
       <View style={styles.detailItem}>
         <Text style={styles.label}>First Name</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.firstName : user?.username}
+          {patient?.profile ? patient?.profile?.firstName : user?.username}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Last Name</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.lastName : ''}
+          {patient?.profile ? patient?.profile?.lastName : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Phone</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.phone : ''}
+          {patient?.profile ? patient?.profile?.phone : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Address</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.address : ''}
+          {patient?.profile ? patient?.profile?.address : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Date of Birth</Text>
         <Text style={styles.value}>
-          {patient?.profile?.dateOfBirth
-            ? format(new Date(patient.profile.dateOfBirth), 'd/M/yyyy')
-            : ''}
+        {patient?.profile?.dateOfBirth}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Gender</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.gender : ''}
+          {patient?.profile ? patient?.profile?.gender : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Blood</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.blood : ''}
+          {patient?.profile ? patient?.profile?.blood : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Age</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.age : ''}
+          {patient?.profile ? patient?.profile?.age : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Height</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.height : ''}
+          {patient?.profile ? patient?.profile?.height : ''}
         </Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Weight</Text>
         <Text style={styles.value}>
-          {patient?.profile ? patient.profile.weight : 'N/A'}
+          {patient?.profile ? patient?.profile?.weight : 'N/A'}
         </Text>
       </View>
     </View>
@@ -142,6 +142,7 @@ const MyProfile = () => {
       </View>
     );
   }
+  console.log(patient);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

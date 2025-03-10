@@ -9,12 +9,12 @@ import {
   Platform,
 } from 'react-native';
 import {useStoreActions} from 'easy-peasy';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 const OtpVerification = () => {
   const {otpVerify} = useStoreActions(actions => actions.user);
-  // const route = useRoute();
-  // const {credential} = route.params;
+  const route = useRoute();
+  const {credential} = route.params;
   // console.log('Received credential:', credential);
   const navigation = useNavigation();
   const [otp, setOtp] = useState(['', '', '', '', '']);
@@ -39,14 +39,14 @@ const OtpVerification = () => {
     }
   };
 
-  const handleOtpVerification = async () => {
-    Keyboard.dismiss();
+  const handleOtpVerification = () => {
     const enteredOtp = otp.join('');
     const verifyingData = {
-      // credential,
+      credential,
       otp: enteredOtp,
     };
-    otpVerify({verifyingData, navigate: navigation.navigate('Dashboard')});
+
+    otpVerify({verifyingData, navigation});
   };
 
   return (
