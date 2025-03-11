@@ -7,6 +7,7 @@ import {
   Animated,
   Text,
   StatusBar,
+  FlatList,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import SearchDoctor from '../components/shared/SearchDoctor/SearchDoctor';
@@ -20,21 +21,30 @@ import {useStoreState} from 'easy-peasy';
 
 const Dashboard = () => {
   const {user} = useStoreState(state => state.user);
-  console.log('Dashboard user', user);
   const navigation = useNavigation();
   const [scrollY, setScrollY] = useState(new Animated.Value(0));
 
   const headerBackgroundColor = scrollY.interpolate({
-    inputRange: [0, 150], // Extended range for smoother transition
+    inputRange: [0, 150],
     outputRange: ['transparent', 'lightblue'],
     extrapolate: 'clamp',
   });
 
   const headerPaddingBottom = scrollY.interpolate({
-    inputRange: [0, 150], // Same range as background transition
-    outputRange: [0, 10], // Starts at 0, increases up to 15px
+    inputRange: [0, 150],
+    outputRange: [0, 10],
     extrapolate: 'clamp',
   });
+
+  const renderContent = () => (
+    <>
+      <ImageCarousel />
+      <Services />
+      <HealthConcerns />
+      <HealthSpecialties />
+      <HomeBlogs />
+    </>
+  );
 
   return (
     <View style={styles.container}>
@@ -80,20 +90,19 @@ const Dashboard = () => {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* 🔹 Scrollable Content */}
-      <Animated.ScrollView
-        contentContainerStyle={styles.scrollViewContent}
+      {/* 🔹 Optimized FlatList for Scrolling */}
+      <Animated.FlatList
+        data={[{key: 'content'}]} // FlatList requires data, using a dummy item
+        renderItem={renderContent}
+        keyExtractor={item => item.key}
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{nativeEvent: {contentOffset: {y: scrollY}}}],
           {useNativeDriver: false},
-        )}>
-        <ImageCarousel />
-        <Services />
-        <HealthConcerns />
-        <HealthSpecialties />
-        <HomeBlogs />
-      </Animated.ScrollView>
+        )}
+        ListHeaderComponent={<View style={{height: 60}} />} // Maintain spacing from header
+        contentContainerStyle={styles.listContent}
+      />
     </View>
   );
 };
@@ -116,23 +125,23 @@ const styles = StyleSheet.create({
     height: 100,
   },
   iconContainer: {
-    width: 50, // Increased width for better spacing
+    width: 50,
     alignItems: 'center',
   },
   userIcon: {
-    width: 45, // Increased size
-    height: 45, // Increased size
+    width: 45,
+    height: 45,
   },
   searchContainer: {
     flex: 1,
     marginHorizontal: 10,
   },
   menuIcon: {
-    fontSize: 32, // Increased size for better visibility
-    fontWeight: 'bold', // Added weight to balance design
+    fontSize: 32,
+    fontWeight: 'bold',
   },
-  scrollViewContent: {
-    paddingTop: 60,
+  listContent: {
+    paddingBottom: 20,
   },
 });
 

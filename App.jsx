@@ -20,6 +20,7 @@ import dashboardIcon from './src/assets/dashboard.png';
 import searchIcon from './src/assets/bottomSearch.png';
 import profileIcon from './src/assets/bottomUser.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import HealthHub from './src/screens/HealthHub';
 
 enableScreens();
 
@@ -114,6 +115,11 @@ const DrawerNavigator = () => {
         name="BookAppointment"
         component={BookAppointment}
         options={{title: 'Book Appointment'}}
+      />
+      <Drawer.Screen
+        name="HealthHub"
+        component={HealthHub}
+        options={{title: 'HealthHub'}}
       />
 
       {user ? (

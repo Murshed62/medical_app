@@ -5,7 +5,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
+  FlatList,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker'; // ✅ Corrected Import
 import HealthSpecialitiesList from '../components/shared/HealthSpecialties/HealthSpecialitiesList/HealthSpecialitiesList';
@@ -27,7 +27,7 @@ const FilterSection = ({specialty, handleFilterValue}) => {
   );
 };
 
-  const FindDoctors = () => {
+const FindDoctors = () => {
   const {getDoctors} = useStoreActions(action => action.doctor);
   const {data} = useStoreState(state => state.doctor);
 
@@ -59,11 +59,10 @@ const FilterSection = ({specialty, handleFilterValue}) => {
 
   const filterValidDoctor = data.filter(item => item.isValid === true);
   const specialty = specialityName(filterValidDoctor);
-
   const filterDoctor = filterDoctorBySpecialty(filterValidDoctor, filterValue);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.header}>Select Doctor</Text>
       <View style={styles.filterSection}>
         <FilterSection
@@ -74,17 +73,30 @@ const FilterSection = ({specialty, handleFilterValue}) => {
       <Text style={styles.availableDoctorsText}>
         {filterDoctor?.length} doctors are available
       </Text>
-      <View>
-        <HealthSpecialitiesList filterDoctor={filterDoctor} home="true"/>
-      </View>
-    </ScrollView>
+
+      {/* ✅ Using FlatList with 2 columns */}
+      <FlatList
+        data={filterDoctor}
+        keyExtractor={(item, index) =>
+          item?.id ? item.id.toString() : index.toString()
+        }
+        numColumns={2} // ✅ Display 2 items per row
+        renderItem={({item}) => (
+          <View style={styles.cardContainer}>
+            <HealthSpecialitiesList filterDoctor={[item]} home="true" />
+          </View>
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingTop: 80,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10, // ✅ Added padding to prevent content from touching edges
     backgroundColor: '#fff',
   },
   header: {
@@ -114,18 +126,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '100%',
   },
   noDataContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '100%',
-    textAlign: 'center',
   },
   noDataText: {
     fontSize: 24,
     color: 'gray',
+  },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  cardContainer: {
+    flex: 1,
+    margin: 10, // ✅ Added margin to space out the cards
+    alignItems: 'center', // ✅ Ensures proper alignment
   },
 });
 
