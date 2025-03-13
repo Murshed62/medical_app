@@ -1,73 +1,117 @@
 import React, {useEffect, useState} from 'react';
 import {
   View,
-  Text,
-  Image,
-  TextInput,
-  Button,
-  TouchableOpacity,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
   Platform,
-  Switch,
 } from 'react-native';
+import {
+  Button,
+  Text,
+  Card,
+  TextInput,
+  HelperText,
+  Avatar,
+  Divider,
+} from 'react-native-paper';
 import {useForm, Controller} from 'react-hook-form';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import {format} from 'date-fns';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useStoreActions, useStoreState} from 'easy-peasy';
+import RNPickerSelect from 'react-native-picker-select';
 
-const BookAppointmentCheckBox = () => {
-  const [isChecked, setIsChecked] = useState(false);
-
-  return (
-    <Switch
-      value={isChecked}
-      onValueChange={newValue => setIsChecked(newValue)} // Set the checked value
-    />
-  );
+const formatDate = text => {
+  // Automatically format input as YYYY-MM-DD
+  let cleaned = text.replace(/[^0-9]/g, '');
+  if (cleaned.length > 4)
+    cleaned = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+  if (cleaned.length > 7)
+    cleaned = cleaned.slice(0, 7) + '-' + cleaned.slice(7, 10);
+  return cleaned;
 };
 
 const BookAppointment = () => {
+  const [showPicker, setShowPicker] = useState(false);
   const navigation = useNavigation();
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: {errors},
-  } = useForm();
-  const {getSingleDoctor} = useStoreActions(action => action.doctor);
-  const {singleDoctor} = useStoreState(state => state.doctor);
-  const {patient} = useStoreState(state => state.patient);
-  const {user} = useStoreState(state => state.user);
   const {doctorId} = useRoute().params;
   console.log(doctorId);
 
-  const [dateValue, setDateValue] = useState(new Date());
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+  } = useForm();
+
+  const {getSingleDoctor} = useStoreActions(actions => actions.doctor);
+  const {singleDoctor} = useStoreState(state => state.doctor);
+  const {getPatient} = useStoreActions(actions => actions.patient);
+  const {initializeUser} = useStoreActions(actions => actions.user);
+  const {patient} = useStoreState(state => state.patient);
+  const {user} = useStoreState(state => state.user);
+  console.log(patient);
+  // const {patientID} = useStoreState(state => state.patientID);
+  // console.log(patientID);
+  const {resetPercentage} = useStoreActions(actions => actions.promoCode);
+
+  // const userID = user?._id;
+
+  const [dateValue, setDateValue] = useState(null);
   const [timeValue, setTimeValue] = useState(null);
   const [scheduleID, setScheduleID] = useState(null);
   const [slotID, setSlotID] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initializeUser();
+  }, [initializeUser]);
+
+  useEffect(() => {
+    if (user?._id) {
+      getPatient(user._id);
+    }
+  }, [getPatient, user]);
 
   useEffect(() => {
     if (doctorId) {
-      getSingleDoctor(doctorId);
+      getSingleDoctor(doctorId).then(() => setLoading(false));
     }
   }, [getSingleDoctor, doctorId]);
 
-  const handleDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || dateValue;
-    setShowDatePicker(Platform.OS === 'ios' ? true : false);
-    setDateValue(currentDate);
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#6200ea" />
+      </View>
+    );
+  }
+
+  if (!singleDoctor || Object.keys(singleDoctor).length === 0) {
+    return (
+      <View style={styles.loaderContainer}>
+        <Text>No doctor details found.</Text>
+      </View>
+    );
+  }
+
+  const handleDateSelection = item => {
+    setDateValue(item.date);
+    setScheduleID(item._id);
   };
 
-  const handleTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || timeValue;
-    setShowTimePicker(Platform.OS === 'ios' ? true : false);
-    setTimeValue(currentTime);
+  const handleTimeSelection = item => {
+    setTimeValue(item.time);
+    setSlotID(item._id);
   };
 
   const onSubmit = data => {
+    if (!dateValue || !timeValue) {
+      Alert('Please select a schedule and time slot.');
+      return;
+    }
+
     const payload = {
       patientID: patient?._id,
       doctorID: singleDoctor?._id,
@@ -76,181 +120,206 @@ const BookAppointment = () => {
       slotID,
       dateValue,
       timeValue,
-      fullName: data.fullName,
-      dateOfBirth: data.dateOfBirth,
-      gender: data.gender,
-      age: data.age,
-      height: data.height,
-      weight: data.weight,
+      ...data,
     };
-    // resetPercentage();
+    resetPercentage();
     navigation.navigate('PaymentPage', {state: payload});
   };
 
-  if (!singleDoctor) {
-    return <Text>Loading...</Text>;
-  }
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Doctor Info */}
-      <View style={styles.profileContainer}>
-        <Image
-          style={styles.profileImage}
-          source={{uri: singleDoctor?.profile}}
-        />
-        <Text style={styles.profileName}>
-          {singleDoctor?.title} {singleDoctor?.firstName}{' '}
-          {singleDoctor?.lastName}
-        </Text>
-        <Text style={styles.profileSpecialty}>{singleDoctor?.speciality}</Text>
-      </View>
-
-      {/* Doctor Fee */}
-      <View style={styles.feeContainer}>
-        <Text style={styles.feeText}>Doctor Fee: {singleDoctor?.fee} Taka</Text>
-      </View>
-
-      {/* Schedule Date Picker */}
-      <View style={styles.scheduleContainer}>
-        <Text style={styles.scheduleText}>Schedule Date:</Text>
-        <TouchableOpacity
-          style={styles.scheduleButton}
-          onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.buttonText}>
-            {dateValue ? dateValue.toDateString() : 'Select Date'}
+    <ScrollView style={styles.container}>
+      <Card style={styles.cardContainer}>
+        <Card.Content>
+          <View style={styles.headerContainer}>
+            <Avatar.Image size={80} source={{uri: singleDoctor?.profile}} />
+            <View style={styles.headerText}>
+              <Text variant="titleLarge" style={styles.doctorName}>
+                {singleDoctor?.title} {singleDoctor?.firstName}{' '}
+                {singleDoctor?.lastName}
+              </Text>
+              <Text style={styles.speciality}>{singleDoctor?.speciality}</Text>
+            </View>
+          </View>
+          <Divider style={styles.divider} />
+          <Text style={styles.text}>
+            Experience: {singleDoctor?.yearOfExperience} years
           </Text>
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={dateValue}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
-
-      {/* Time Slot Picker */}
-      <View style={styles.slotContainer}>
-        <Text style={styles.scheduleText}>Choose Slot:</Text>
-        <TouchableOpacity
-          style={styles.scheduleButton}
-          onPress={() => setShowTimePicker(true)}>
-          <Text style={styles.buttonText}>
-            {timeValue ? timeValue.toLocaleTimeString() : 'Select Time'}
+          <Text style={styles.text}>
+            Organization: {singleDoctor?.organization}
           </Text>
-        </TouchableOpacity>
+        </Card.Content>
+      </Card>
 
-        {showTimePicker && (
-          <DateTimePicker
-            value={timeValue || new Date()}
-            mode="time"
-            display="default"
-            onChange={handleTimeChange}
-          />
-        )}
+      <Text style={styles.sectionTitle}>Select Schedule:</Text>
+      <View style={styles.buttonGroup}>
+        {singleDoctor?.schedule?.map((item, index) => (
+          <Button
+            key={index}
+            mode={item.date === dateValue ? 'contained' : 'outlined'}
+            onPress={() => handleDateSelection(item)}
+            style={styles.button}>
+            {format(new Date(item.date), 'dd-MM-yyyy')}
+          </Button>
+        ))}
       </View>
 
-      {/* Patient Details Form */}
-      <Text style={styles.formTitle}>Patient Details:</Text>
+      <Text style={styles.sectionTitle}>Choose a Slot:</Text>
+      <View style={styles.buttonGroup}>
+        {scheduleID &&
+          singleDoctor.schedule
+            .find(s => s._id === scheduleID)
+            ?.slots?.map((item, index) => (
+              <Button
+                key={index}
+                mode={item.time === timeValue ? 'contained' : 'outlined'}
+                onPress={() => handleTimeSelection(item)}
+                style={styles.button}>
+                {item.time}
+              </Button>
+            ))}
+      </View>
+
+      <Text style={styles.sectionTitle}>Patient Details (Optional):</Text>
       <Controller
-        name="fullName"
         control={control}
+        name="fullName"
         rules={{required: 'Full Name is required'}}
         render={({field: {onChange, value}}) => (
           <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            onChangeText={onChange}
+            label="Full Name"
             value={value}
+            onChangeText={onChange}
+            error={!!errors.fullName}
           />
         )}
       />
-      {errors.fullName && (
-        <Text style={styles.error}>{errors.fullName.message}</Text>
-      )}
+      <HelperText type="error" visible={!!errors.fullName}>
+        {errors.fullName?.message}
+      </HelperText>
 
-      {/* Other form fields... */}
+      <Text style={{marginTop: 10}}>Gender</Text>
+      <Controller
+        control={control}
+        name="gender"
+        rules={{required: 'Gender is required'}}
+        render={({field: {onChange, value}}) => (
+          <View style={styles.input}>
+            <RNPickerSelect
+              onValueChange={onChange}
+              items={[
+                {label: 'Male', value: 'male'},
+                {label: 'Female', value: 'female'},
+                {label: 'Other', value: 'other'},
+              ]}
+              value={value}
+              placeholder={{label: 'Select Gender', value: null}}
+              style={{
+                inputAndroid: styles.input,
+                inputIOS: styles.input,
+              }}
+            />
+          </View>
+        )}
+      />
+      <HelperText type="error" visible={!!errors.gender}>
+        {errors.gender?.message}
+      </HelperText>
 
-      <View style={styles.checkboxContainer}>
-        <BookAppointmentCheckBox />
-        <Text>I agree to the Terms & Conditions</Text>
-      </View>
+      <Controller
+        control={control}
+        name="dateOfBirth"
+        rules={{
+          required: 'Date of Birth is required',
+          pattern: {
+            value: /^\d{4}-\d{2}-\d{2}$/,
+            message: 'Enter a valid date (YYYY-MM-DD)',
+          },
+        }}
+        render={({field: {onChange, onBlur, value}}) => (
+          <>
+            <TextInput
+              label="Date of Birth"
+              mode="outlined"
+              onBlur={onBlur}
+              onChangeText={text => onChange(formatDate(text))}
+              value={value}
+              keyboardType="numeric"
+              placeholder="YYYY-MM-DD"
+              error={!!errors.dateOfBirth}
+              style={styles.input}
+            />
+            {errors.dateOfBirth && (
+              <HelperText type="error">{errors.dateOfBirth.message}</HelperText>
+            )}
+          </>
+        )}
+      />
 
-      <Button title="Book Appointment" onPress={handleSubmit(onSubmit)} />
+      <Controller
+        control={control}
+        name="age"
+        render={({field: {onChange, value}}) => (
+          <TextInput
+            label="Age (Optional)"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="weight"
+        render={({field: {onChange, value}}) => (
+          <TextInput
+            label="Weight (Optional)"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="height"
+        render={({field: {onChange, value}}) => (
+          <TextInput
+            label="Height (Optional)"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+      />
+
+      <Button
+        mode="contained"
+        onPress={handleSubmit(onSubmit)}
+        style={styles.submitButton}>
+        Book Appointment
+      </Button>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  profileContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  profileSpecialty: {
-    fontSize: 16,
-    color: 'gray',
-  },
-  feeContainer: {
-    marginBottom: 20,
-  },
-  feeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  scheduleContainer: {
-    marginBottom: 20,
-  },
-  scheduleText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  scheduleButton: {
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-});
-
 export default BookAppointment;
+
+const styles = StyleSheet.create({
+  container: {padding: 16, backgroundColor: '#F9FAFB'},
+  cardContainer: {marginBottom: 16, borderRadius: 10},
+  headerContainer: {flexDirection: 'row', alignItems: 'center'},
+  headerText: {marginLeft: 12},
+  doctorName: {fontWeight: 'bold', color: '#333'},
+  speciality: {color: '#666'},
+  divider: {marginVertical: 8},
+  text: {color: '#444', marginBottom: 4},
+  sectionTitle: {fontSize: 18, fontWeight: 'bold', marginVertical: 10},
+  buttonGroup: {flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12},
+  button: {margin: 4, borderRadius: 10},
+  submitButton: {
+    marginTop: 12,
+    borderRadius: 8,
+    paddingVertical: 8,
+    marginBottom: 30,
+  },
+  loaderContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  errorText: {color: 'red', fontSize: 14, marginVertical: 5},
+});

@@ -138,7 +138,7 @@ const userModel = {
     state.isLogoutUser = true;
   }),
 
-  logoutUser: thunk(async (actions, {navigation, token}) => {
+  logoutUser: thunk(async (actions, {token, navigate}) => {
     try {
       const {data} = await axios.get(
         'https://api.surelinehealth.com/api/logout',
@@ -150,18 +150,11 @@ const userModel = {
       );
 
       if (data.success) {
-        // Remove token and user data from AsyncStorage
         await AsyncStorage.removeItem('token');
         await AsyncStorage.removeItem('user');
-
-        // Update Redux state or context
         actions.addLogoutData();
-
-        // Show a success toast message
         ToastAndroid.show(data.message, ToastAndroid.SHORT);
-
-        // Navigate to Login or Home screen
-        navigation.navigate('TabNavigator'); // Change 'Login' to the correct screen name
+        navigate('TabNavigator');
       }
     } catch (error) {
       console.error('Logout Error:', error);
@@ -368,60 +361,88 @@ const doctorModel = {
 
 const patientModel = {
   patient: null,
-  delteState: null,
+  deleteState: null,
   updatedData: null,
   patientImageData: null,
+
+  // Action to set patient data
   addPatient: action((state, payload) => {
     state.patient = payload;
   }),
+
+  // Thunk to fetch patient details
   getPatient: thunk(async (actions, payload) => {
-    console.log(payload);
-    const {data} = await axios.get(
-      `https://api.surelinehealth.com/api/patient/${payload}`,
-    );
-    console.log('action er age', data);
-    actions.addPatient(data);
+    try {
+      const {data} = await axios.get(
+        `https://api.surelinehealth.com/api/patient/${payload}`,
+      );
+      actions.addPatient(data);
+    } catch (error) {
+      console.error('Error fetching patient:', error);
+    }
   }),
 
-  addDelteState: action((state, payload) => {
-    state.delteState = payload;
+  // Action to set delete state
+  addDeleteState: action((state, payload) => {
+    state.deleteState = payload;
   }),
+
+  // Thunk to delete patient appointment
   deletePatientAppointment: thunk(async (actions, payload) => {
-    const {patientID, appointmentID, doctorID} = payload;
-    const {data} = await axios.patch(
-      `https://api.surelinehealth.com/api/patientAppointment/${patientID}`,
-      {
-        appointmentID,
-        doctorID,
-      },
-    );
-    actions.addDelteState(data);
+    try {
+      const {patientID, appointmentID, doctorID} = payload;
+      const {data} = await axios.patch(
+        `https://api.surelinehealth.com/api/patientAppointment/${patientID}`,
+        {
+          appointmentID,
+          doctorID,
+        },
+      );
+      actions.addDeleteState(data);
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+    }
   }),
+
+  // Action to update profile data
   addUpdatedData: action((state, payload) => {
     state.updatedData = payload;
   }),
+
+  // Thunk to update patient profile
   updateProfile: thunk(async (actions, payload) => {
-    const id = payload.userID;
-    const formData = payload.updatedFormData;
-    const {data} = await axios.patch(
-      `https://api.surelinehealth.com/api/patient/${id}`,
-      formData,
-    );
-    actions.addUpdatedData(data);
+    try {
+      const {userID, updatedFormData} = payload;
+      const {data} = await axios.patch(
+        `https://api.surelinehealth.com/api/patient/${userID}`,
+        updatedFormData,
+      );
+      actions.addUpdatedData(data);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   }),
+
+  // Action to set patient image data
   addPatientImageData: action((state, payload) => {
     state.patientImageData = payload;
   }),
+
+  // Thunk to update patient image
   updatePatientImage: thunk(async (actions, payload) => {
-    const {userID, formData} = payload;
-    const {data} = await axios.patch(
-      `https://api.surelinehealth.com/api/patientImage/${userID}`,
-      formData,
-      {
-        headers: {'Content-Type': 'multipart/form-data'},
-      },
-    );
-    actions.addPatientImageData(data);
+    try {
+      const {userID, formData} = payload;
+      const {data} = await axios.patch(
+        `https://api.surelinehealth.com/api/patientImage/${userID}`,
+        formData,
+        {
+          headers: {'Content-Type': 'multipart/form-data'},
+        },
+      );
+      actions.addPatientImageData(data);
+    } catch (error) {
+      console.error('Error updating patient image:', error);
+    }
   }),
 };
 const testRecommendationModel = {
@@ -627,16 +648,18 @@ const freeAppointmentModel = {
   addData: action((state, payload) => {
     state.data = payload;
   }),
-  createFreeAppointment: thunk(async (actions, {payload, navigate}) => {
+  createFreeAppointment: thunk(async (actions, {payload, navigation}) => {
     const {data} = await axios.post(
       'https://api.surelinehealth.com/api/freeAppointments',
       payload,
     );
+    console.log(data);
     ToastAndroid.success('Free Appointment Created!', {position: 'top-right'});
-    if (!data) {
-      return null;
+    if (data) {
+      navigation.navigate('SuccessFreeAppointment', {
+        freeAppointmentId: data.freeAppointmentId,
+      });
     }
-    navigate(`/successFreeAppointment/${data.freeAppointmentId}`);
   }),
 };
 const adminModel = {

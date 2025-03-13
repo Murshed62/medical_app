@@ -3,119 +3,97 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Button,
   Image,
-  StyleSheet,
   ScrollView,
-  Alert,
+  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
-import {Controller, useForm} from 'react-hook-form';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useRoute, useNavigation} from '@react-navigation/native';
+import {useStoreActions, useStoreState} from 'easy-peasy';
 import {format} from 'date-fns';
 
-// Promo Section
-const PromoSection = ({getPercentage, percentage, error}) => {
-  const {control, handleSubmit, reset} = useForm();
+const PromoSection = () => {
+  const {getPercentage} = useStoreActions(actions => actions.promoCode);
+  const {error, percentage} = useStoreState(state => state.promoCode);
+  const [promoCode, setPromoCode] = useState('');
 
-  const onSubmit = data => {
-    const promoCode = data.promoCode;
+  const applyPromoCode = () => {
     getPercentage(promoCode);
-    reset();
+    setPromoCode('');
   };
 
   return (
     <View style={styles.promoContainer}>
-      <Text style={styles.heading}>Apply Promo Code</Text>
-      <Text style={styles.subText}>
+      <Text style={styles.title}>Apply Promo Code</Text>
+      <Text style={styles.centerText}>
         Use promo code for <Text style={{color: 'red'}}>FREE APPOINTMENT</Text>
       </Text>
-      <Text style={styles.subText}>Paid option is not available now!</Text>
-
-      <View style={styles.inputRow}>
-        <Controller
-          control={control}
-          name="promoCode"
-          render={({field: {onChange, value}}) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Promo Code"
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSubmit(onSubmit)}>
-          <Text style={styles.buttonText}>Apply Now</Text>
-        </TouchableOpacity>
-      </View>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {percentage > 0 && !error ? (
+      <TextInput
+        value={promoCode}
+        onChangeText={setPromoCode}
+        placeholder="Enter Promo Code"
+        style={styles.input}
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      {(percentage > 0 || percentage === 100) && !error && (
         <Text>Discount Applied: {percentage}%</Text>
-      ) : null}
+      )}
+      <TouchableOpacity style={styles.button} onPress={applyPromoCode}>
+        <Text style={styles.buttonText}>Apply Now</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-// Bill Section
-const BillSection = ({
-  patientData,
-  getPercentage,
-  percentage,
-  error,
-  getUrl,
-  createFreeAppointment,
-}) => {
+const BillSection = ({patientData}) => {
+  const {percentage} = useStoreState(state => state.promoCode);
+  const {getUrl} = useStoreActions(actions => actions.sslCommerz);
+  const {createFreeAppointment} = useStoreActions(
+    actions => actions.freeAppointment,
+  );
   const navigation = useNavigation();
+
   const discountAmount = (patientData.fee * percentage) / 100;
   const totalFee = patientData.fee - discountAmount;
 
   const handlePayment = () => {
-    const payload = {...patientData, totalFee};
-    getUrl(payload);
+    getUrl({...patientData, totalFee});
   };
 
   const handleFreeAppointment = () => {
-    const payload = {...patientData, totalFee};
-    createFreeAppointment({payload, navigation});
+    console.log(patientData);
+    createFreeAppointment({
+      payload: {...patientData, totalFee},
+      navigation,
+    });
   };
 
   return (
     <View style={styles.billContainer}>
-      <Text style={styles.heading}>Bill Details</Text>
+      <Text style={styles.sectionTitle}>Bill Summary</Text>
       <View style={styles.row}>
-        <Text>Fee</Text>
+        <Text>Fee:</Text>
         <Text>{patientData.fee}</Text>
       </View>
       <View style={styles.row}>
-        <Text>Discount</Text>
+        <Text>Discount:</Text>
         <Text>{discountAmount}</Text>
       </View>
       <View style={styles.row}>
-        <Text>Total Fee</Text>
+        <Text>Total Fee:</Text>
         <Text>{totalFee}</Text>
       </View>
-
-      <PromoSection
-        getPercentage={getPercentage}
-        percentage={percentage}
-        error={error}
-      />
-
+      <PromoSection />
       {percentage === 100 ? (
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleFreeAppointment}>
+        <TouchableOpacity style={styles.button} onPress={handleFreeAppointment}>
           <Text style={styles.buttonText}>Free Appointment</Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          style={[styles.primaryButton, {backgroundColor: 'gray'}]}
-          disabled
-          onPress={handlePayment}>
+          style={[styles.button, styles.disabledButton]}
+          onPress={handlePayment}
+          disabled>
           <Text style={styles.buttonText}>Continue to Payment</Text>
         </TouchableOpacity>
       )}
@@ -123,148 +101,80 @@ const BillSection = ({
   );
 };
 
-// Payment Page
-const PaymentPage = ({
-  getDoctorById,
-  doctor,
-  getPercentage,
-  percentage,
-  error,
-  getUrl,
-  createFreeAppointment,
-}) => {
-  const navigation = useNavigation();
+const PaymentPage = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const patientData = route.params || {};
-  const doctorId = patientData.doctorID;
+  const {getDoctorById} = useStoreActions(actions => actions.doctor);
+  const {doctor} = useStoreState(state => state.doctor);
+  const doctorID = patientData.state.doctorID;
 
   useEffect(() => {
-    getDoctorById(doctorId);
-  }, [doctorId]);
+    getDoctorById(doctorID);
+  }, [getDoctorById, doctorID]);
 
-  if (!doctor) return <Text>Loading...</Text>;
+  if (!doctor) {
+    return <Text>Loading...</Text>;
+  }
 
   return (
     <ScrollView style={styles.container}>
-      {/* Doctor Profile */}
       <View style={styles.profileContainer}>
-        <Image source={{uri: doctor?.profile}} style={styles.profileImage} />
-        <View>
-          <Text style={styles.profileName}>
-            {doctor?.title} {doctor?.firstName} {doctor?.lastName}
-          </Text>
-          <Text style={styles.speciality}>{doctor?.speciality}</Text>
-        </View>
+        <Image source={{uri: doctor.profile}} style={styles.profileImage} />
+        <Text style={styles.profileName}>
+          {doctor.title} {doctor.firstName} {doctor.lastName}
+        </Text>
+        <Text>{doctor.speciality}</Text>
       </View>
-
-      {/* Appointment Details */}
-      <View style={styles.section}>
-        <Text style={styles.heading}>Appointment Details</Text>
-        <View style={styles.row}>
-          <Icon name="video-call" size={20} />
-          <Text>Video Call Service</Text>
-        </View>
-        <View style={styles.row}>
-          <Icon name="calendar-today" size={20} />
-          <Text>
-            Date: {format(new Date(patientData?.dateValue), 'M/d/yyyy')}
-          </Text>
-        </View>
-        <View style={styles.row}>
-          <Icon name="access-time" size={20} />
-          <Text>Time: {patientData.timeValue}</Text>
-        </View>
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Appointment Details</Text>
+        <Text>
+          Date: {format(new Date(patientData?.state?.dateValue), 'MM/dd/yyyy')}
+        </Text>
+        <Text>Time: {patientData?.state?.timeValue}</Text>
+        <Text>Appointment Created: {format(new Date(), 'MM/dd/yyyy')}</Text>
       </View>
-
-      {/* Bill Section */}
-      <BillSection
-        patientData={patientData}
-        getPercentage={getPercentage}
-        percentage={percentage}
-        error={error}
-        getUrl={getUrl}
-        createFreeAppointment={createFreeAppointment}
-      />
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Patient Details</Text>
+        <Text>Full Name: {patientData?.state?.fullName}</Text>
+        <Text>Age: {patientData?.state?.age}</Text>
+        <Text>Date of Birth: {patientData?.state?.dateOfBirth}</Text>
+        <Text>Gender: {patientData?.state?.gender}</Text>
+        <Text>Height: {patientData?.state?.height}</Text>
+        <Text>Weight: {patientData?.state?.weight}</Text>
+      </View>
+      <BillSection patientData={patientData?.state} />
     </ScrollView>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 15,
-  },
-  profileContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginRight: 15,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  speciality: {
-    fontSize: 14,
-    color: 'gray',
-  },
-  section: {
-    marginBottom: 20,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
+  container: {padding: 20},
+  profileContainer: {alignItems: 'center', marginBottom: 20},
+  profileImage: {width: 120, height: 120, borderRadius: 60},
+  profileName: {fontSize: 18, fontWeight: 'bold'},
+  sectionContainer: {marginBottom: 20},
+  sectionTitle: {fontSize: 16, fontWeight: 'bold', marginBottom: 5},
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
+    justifyContent: 'space-between',
+    marginVertical: 5,
   },
-  promoContainer: {
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    padding: 10,
-    marginRight: 10,
-  },
+  billContainer: {marginTop: 20, padding: 10, borderWidth: 1, borderRadius: 5},
+  promoContainer: {padding: 20, alignItems: 'center'},
+  title: {fontSize: 18, fontWeight: 'bold', textAlign: 'center'},
+  centerText: {textAlign: 'center', marginBottom: 10},
+  input: {borderWidth: 1, padding: 10, marginTop: 10, width: '100%'},
+  errorText: {color: 'red'},
   button: {
-    backgroundColor: '#6200ea',
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-  },
-  errorText: {
-    color: 'red',
-  },
-  billContainer: {
-    padding: 15,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-  },
-  primaryButton: {
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
+    alignItems: 'center',
     marginTop: 10,
   },
+  buttonText: {color: '#fff', fontWeight: 'bold'},
+  disabledButton: {backgroundColor: '#ccc'},
 });
 
 export default PaymentPage;

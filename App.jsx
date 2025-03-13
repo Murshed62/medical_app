@@ -1,54 +1,63 @@
-import {useEffect, useState} from 'react';
-import {NavigationContainer, useNavigation} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {enableScreens} from 'react-native-screens';
 import {StoreProvider, useStoreActions, useStoreState} from 'easy-peasy';
-import {Text, View, ActivityIndicator} from 'react-native';
+import {View, Text, ActivityIndicator, Image} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import store from './src/store';
 import Login from './src/screens/Login';
 import Register from './src/screens/Register';
+import ForgotPassword from './src/screens/ForgotPassword';
+import OtpVerification from './src/screens/OtpVerification';
 import MyProfile from './src/screens/MyProfile';
 import Dashboard from './src/screens/Dashboard';
-import OtpVerification from './src/screens/OtpVerification';
 import FindDoctors from './src/screens/FindDoctors';
 import BookAppointment from './src/screens/BookAppointment';
 import PaymentPage from './src/screens/PaymentPage';
-import {Image} from 'react-native';
+import HealthHub from './src/screens/HealthHub';
+import SuccessFreeAppointment from './src/components/shared/SuccessFreeAppointment/SuccessFreeAppointment';
+
+// Icons
 import dashboardIcon from './src/assets/dashboard.png';
 import searchIcon from './src/assets/bottomSearch.png';
 import profileIcon from './src/assets/bottomUser.png';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import HealthHub from './src/screens/HealthHub';
 
 enableScreens();
 
-const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// Stack Navigator for BookAppointment and other screens
+// ✅ **Auth Stack for Login, Register & ForgotPassword**
+const AuthStack = () => (
+  <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Screen name="Login" component={Login} />
+    <Stack.Screen name="Register" component={Register} />
+    <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+    <Stack.Screen name="OtpVerification" component={OtpVerification} />
+  </Stack.Navigator>
+);
+
+// ✅ **Dashboard Stack (Includes PaymentPage)**
 const DashboardStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
     <Stack.Screen name="Dashboard" component={Dashboard} />
     <Stack.Screen name="MyProfile" component={MyProfile} />
     <Stack.Screen name="FindDoctors" component={FindDoctors} />
     <Stack.Screen name="BookAppointment" component={BookAppointment} />
-  </Stack.Navigator>
-);
-
-// Stack Navigator for Registration Flow
-const RegisterStack = () => (
-  <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name="Register" component={Register} />
-    <Stack.Screen name="OtpVerification" component={OtpVerification} />
-    <Stack.Screen name="DashboardStack" component={DashboardStack} />
     <Stack.Screen name="PaymentPage" component={PaymentPage} />
+    <Stack.Screen
+      name="SuccessFreeAppointment"
+      component={SuccessFreeAppointment}
+    />
   </Stack.Navigator>
 );
 
-// Bottom Tab Navigation with Icons
+// ✅ **Bottom Tab Navigator**
 const TabNavigator = () => (
   <Tab.Navigator screenOptions={{headerShown: false}}>
     <Tab.Screen
@@ -59,14 +68,14 @@ const TabNavigator = () => (
       }}
     />
     <Tab.Screen
-      name="Find Doctors"
+      name="FindDoctors"
       component={FindDoctors}
       options={{
-        tabBarIcon: () => <Image source={searchIcon} width={20} height={20} />,
+        tabBarIcon: () => <Image source={searchIcon} />,
       }}
     />
     <Tab.Screen
-      name="My Profile"
+      name="MyProfile"
       component={MyProfile}
       options={{
         tabBarIcon: () => <Image source={profileIcon} />,
@@ -75,20 +84,26 @@ const TabNavigator = () => (
   </Tab.Navigator>
 );
 
-// Logout Screen Component
-const LogoutScreen = () => {
-  const navigation = useNavigation();
+// ✅ **Logout Screen**
+const LogoutScreen = ({navigation}) => {
   const logoutUser = useStoreActions(actions => actions.user.logoutUser);
-  const {user} = useStoreState(state => state.user);
   const [token, setToken] = useState(null);
-  AsyncStorage.getItem('token')
-    .then(token => {
-      setToken(token);
-    })
-    .catch(error => {
-      console.error('Error retrieving token:', error);
-    });
-  logoutUser({token, navigation});
+
+  useEffect(() => {
+    const fetchTokenAndLogout = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        setToken(token);
+        if (token) {
+          await logoutUser({token, navigate: navigation});
+        }
+      } catch (error) {
+        console.error('Error retrieving token:', error);
+      }
+    };
+
+    fetchTokenAndLogout();
+  }, [logoutUser, navigation]);
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
@@ -98,7 +113,7 @@ const LogoutScreen = () => {
   );
 };
 
-// Drawer Navigation
+// ✅ **Drawer Navigator (Now Includes PaymentPage)**
 const DrawerNavigator = () => {
   const {user} = useStoreState(state => state.user);
 
@@ -117,9 +132,19 @@ const DrawerNavigator = () => {
         options={{title: 'Book Appointment'}}
       />
       <Drawer.Screen
+        name="PaymentPage"
+        component={PaymentPage}
+        options={{title: 'Payment Page'}}
+      />
+      <Drawer.Screen
         name="HealthHub"
         component={HealthHub}
         options={{title: 'HealthHub'}}
+      />
+      <Drawer.Screen
+        name="SuccessFreeAppointment"
+        component={SuccessFreeAppointment}
+        options={{title: 'SuccessFreeAppointment'}}
       />
 
       {user ? (
@@ -129,15 +154,17 @@ const DrawerNavigator = () => {
           options={{title: 'Logout'}}
         />
       ) : (
-        <>
-          <Drawer.Screen name="Login" component={Login} />
-          <Drawer.Screen name="Register" component={RegisterStack} />
-        </>
+        <Drawer.Screen
+          name="AuthStack"
+          component={AuthStack}
+          options={{title: 'Login / Register'}}
+        />
       )}
     </Drawer.Navigator>
   );
 };
 
+// ✅ **Main App Component**
 const App = () => {
   return (
     <NavigationContainer>
