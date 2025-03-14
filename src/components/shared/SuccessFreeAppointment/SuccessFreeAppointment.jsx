@@ -12,7 +12,7 @@ import {useStoreActions, useStoreState} from 'easy-peasy';
 
 const SuccessFreeAppointment = ({route}) => {
   const navigation = useNavigation();
-  const { freeAppointmentId } = route.params || {};
+  const {freeAppointmentId} = route.params || {};
 
   const {getAppointments} = useStoreActions(actions => actions.appointment);
   const {appointments} = useStoreState(state => state.appointment);
@@ -85,7 +85,7 @@ const SuccessFreeAppointment = ({route}) => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Home')}>
+          onPress={() => navigation.navigate('Dashboard')}>
           <Text style={styles.buttonText}>Go to Home Page</Text>
         </TouchableOpacity>
       </View>

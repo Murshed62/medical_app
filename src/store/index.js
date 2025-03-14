@@ -649,16 +649,22 @@ const freeAppointmentModel = {
     state.data = payload;
   }),
   createFreeAppointment: thunk(async (actions, {payload, navigation}) => {
-    const {data} = await axios.post(
-      'https://api.surelinehealth.com/api/freeAppointments',
-      payload,
-    );
-    console.log(data);
-    ToastAndroid.success('Free Appointment Created!', {position: 'top-right'});
-    if (data) {
-      navigation.navigate('SuccessFreeAppointment', {
-        freeAppointmentId: data.freeAppointmentId,
-      });
+    console.log('Navigation Object:', navigation);
+    try {
+      const {data} = await axios.post(
+        'https://api.surelinehealth.com/api/freeAppointments',
+        payload,
+      );
+      console.log(data);
+
+      if (data) {
+        ToastAndroid.show('Free Appointment Created!', ToastAndroid.SHORT);
+        navigation.navigate('SuccessFreeAppointment', {
+          freeAppointmentId: data.freeAppointmentId,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating free appointment:', error);
     }
   }),
 };

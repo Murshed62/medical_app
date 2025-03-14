@@ -13,6 +13,7 @@ import ProfileAvatorCard from '../components/shared/ProfileAvatorCard/ProfileAva
 import EditPatientProfile from '../components/shared/EditPatientProfile/EditPatientProfile';
 import ChangePassword from '../components/shared/ChangePassword/ChangePassword';
 import OpenModal from '../modal/OpenModal';
+import {useNavigation} from '@react-navigation/native';
 
 const ProfileDetails = ({patient}) => {
   console.log('patient variable', patient);
@@ -50,9 +51,7 @@ const ProfileDetails = ({patient}) => {
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Date of Birth</Text>
-        <Text style={styles.value}>
-        {patient?.profile?.dateOfBirth}
-        </Text>
+        <Text style={styles.value}>{patient?.profile?.dateOfBirth}</Text>
       </View>
       <View style={styles.detailItem}>
         <Text style={styles.label}>Gender</Text>
@@ -89,6 +88,7 @@ const ProfileDetails = ({patient}) => {
 };
 
 const MyProfile = () => {
+  const navigation = useNavigation();
   // const [user, setUser] = useState(null);
   const {getPatient} = useStoreActions(action => action.patient);
   const {initializeUser} = useStoreActions(action => action.user);
@@ -134,6 +134,9 @@ const MyProfile = () => {
   const handleCloseCP = () => {
     setOpenCP(false);
   };
+  const handleAppointment = () => {
+    navigation.navigate('DoctorAppointmentTable');
+  };
 
   if (!user && !patient) {
     return (
@@ -158,6 +161,16 @@ const MyProfile = () => {
             style={[styles.button, styles.secondaryButton]}
             onPress={handleClickOpenCP}>
             <Text style={styles.buttonText}>Change Password</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.AppointmentButton]}
+            onPress={handleAppointment}>
+            <Text style={styles.buttonText}>Appointments</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.InvoiceButton]}
+            onPress={handleClickOpenCP}>
+            <Text style={styles.buttonText}>Invoice</Text>
           </TouchableOpacity>
           <OpenModal open={open} handleClose={handleClose}>
             <EditPatientProfile handleClose={handleClose} userID={userID} />
@@ -245,6 +258,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: '100%',
   },
+  AppointmentButton: {
+    backgroundColor: '#008000',
+    marginTop: 20,
+  },
+  InvoiceButton:{
+    backgroundColor: '#FF8C00',
+  
+  }
 });
 
 export default MyProfile;

@@ -25,6 +25,7 @@ import SuccessFreeAppointment from './src/components/shared/SuccessFreeAppointme
 import dashboardIcon from './src/assets/dashboard.png';
 import searchIcon from './src/assets/bottomSearch.png';
 import profileIcon from './src/assets/bottomUser.png';
+import DoctorAppointmentTable from './src/components/shared/DoctorAppointmentTable/DoctorAppointmentTable';
 
 enableScreens();
 
@@ -50,6 +51,10 @@ const DashboardStack = () => (
     <Stack.Screen name="FindDoctors" component={FindDoctors} />
     <Stack.Screen name="BookAppointment" component={BookAppointment} />
     <Stack.Screen name="PaymentPage" component={PaymentPage} />
+    <Stack.Screen
+      name="DoctorAppointmentTable"
+      component={DoctorAppointmentTable}
+    />
     <Stack.Screen
       name="SuccessFreeAppointment"
       component={SuccessFreeAppointment}
@@ -127,24 +132,15 @@ const DrawerNavigator = () => {
         options={{title: 'Dashboard'}}
       />
       <Drawer.Screen
-        name="BookAppointment"
-        component={BookAppointment}
-        options={{title: 'Book Appointment'}}
+        name="DoctorAppointmentTable"
+        component={DoctorAppointmentTable}
+        options={{title: 'My Appointments'}}
       />
-      <Drawer.Screen
-        name="PaymentPage"
-        component={PaymentPage}
-        options={{title: 'Payment Page'}}
-      />
+
       <Drawer.Screen
         name="HealthHub"
         component={HealthHub}
         options={{title: 'HealthHub'}}
-      />
-      <Drawer.Screen
-        name="SuccessFreeAppointment"
-        component={SuccessFreeAppointment}
-        options={{title: 'SuccessFreeAppointment'}}
       />
 
       {user ? (

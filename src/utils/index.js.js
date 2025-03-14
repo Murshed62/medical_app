@@ -90,6 +90,9 @@ const filterDoctorAppointments = (appointments, filterValue) => {
         ['confirmed', 'completed'].includes(appt.status)
       );
     }
+    if (filterValue === 'all') {
+      return true;
+    }
     return appt.status === filterValue;
   });
 };

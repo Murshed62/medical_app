@@ -7,6 +7,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import {Appbar, Button, ActivityIndicator} from 'react-native-paper';
 import {useStoreActions, useStoreState} from 'easy-peasy';
@@ -58,7 +59,7 @@ const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
           Download
         </Button>
       </Appbar.Header>
-      <ScrollView style={{padding: 16}}>
+      <ScrollView style={styles.container}>
         {appointmentByIdData ? (
           <View>
             <Text>
@@ -75,7 +76,7 @@ const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
                   placeholder="Enter problem"
                   value={problem}
                   onChangeText={setProblem}
-                  style={{borderWidth: 1, padding: 8, marginBottom: 10}}
+                  style={styles.input}
                 />
                 <Button mode="contained" onPress={handlePrescriptionSubmit}>
                   Start Prescription
@@ -92,5 +93,16 @@ const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 8,
+    marginBottom: 10,
+  },
+});
 
 export default AppointmentDetails;

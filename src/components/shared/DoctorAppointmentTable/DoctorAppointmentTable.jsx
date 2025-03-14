@@ -4,30 +4,18 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  Modal,
   StyleSheet,
-  Button,
-  Alert,
+  Linking,
 } from 'react-native';
+import {Picker} from '@react-native-picker/picker';
 import {useStoreActions, useStoreState} from 'easy-peasy';
 import {format, isAfter, isBefore, isToday, parseISO} from 'date-fns';
-import {
-  VideoChatIcon,
-  VideocamOffIcon,
-  BeenhereIcon,
-  DeleteIcon,
-} from '@mui/icons-material'; // Use appropriate icons from React Native or custom components
-import AppointmentDetails from '../../../pages/AppointmentDetails/AppointDetails'; // Ensure this component is adjusted for React Native
+import VideoChatIcon from 'react-native-vector-icons/MaterialIcons';
+import VideocamOffIcon from 'react-native-vector-icons/MaterialIcons';
+import BeenhereIcon from 'react-native-vector-icons/MaterialIcons';
 
-// Define columns as headers
-const columns = [
-  'No',
-  'Patient Name',
-  'Created',
-  'Schedule Start',
-  'Status',
-  'Action',
-];
+import AppointmentDetails from '../AppointmentDetails/AppointDetails';
+import {filterDoctorAppointments} from '../../../utils/index.js';
 
 const TableRowAction = ({item}) => {
   const {updateStatus} = useStoreActions(actions => actions.appointment);
@@ -45,123 +33,136 @@ const TableRowAction = ({item}) => {
     setSelectedItem(null);
   };
 
-  if (!item) return null;
-
+  if (!item) {
+    return null;
+  }
   const today = isToday(parseISO(item?.date), new Date());
   const upcoming = isAfter(parseISO(item?.date), new Date());
   const id = item?._id;
 
   return (
-    <View style={styles.rowActionContainer}>
+    <View style={styles.actionContainer}>
       <TouchableOpacity
         onPress={() => handleClickOpen(item)}
         disabled={
           item?.status === 'pending' || item?.status === 'cancelled' || upcoming
         }
         style={[
-          styles.prescriptionButton,
-          {backgroundColor: item?.status === 'pending' ? 'red' : 'blue'},
+          styles.actionButton,
+          {
+            backgroundColor: item?.status === 'pending' ? 'red' : 'blue',
+          },
         ]}>
-        <Text style={styles.buttonText}>Prescription</Text>
+        <Text style={styles.actionButtonText}>Prescription</Text>
       </TouchableOpacity>
-
       <View style={styles.iconContainer}>
         {today &&
         item?.status !== 'completed' &&
         item?.status !== 'cancelled' ? (
           <TouchableOpacity
             onPress={() => {
-              /* Handle Video Chat */
+              if (item.googleMeetLink) {
+                Linking.openURL(item.googleMeetLink);
+              }
             }}>
-            <VideoChatIcon style={styles.icon} />
+            <VideoChatIcon name="video-call" size={24} color="blue" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity>
-            <VideocamOffIcon style={styles.icon} />
-          </TouchableOpacity>
+          <VideocamOffIcon name="videocam-off" size={24} color="gray" />
         )}
-
         <TouchableOpacity onPress={() => updateStatus({id})}>
           <BeenhereIcon
-            style={[
-              styles.icon,
-              {
-                color:
-                  item?.status === 'completed'
-                    ? 'green'
-                    : item?.status === 'cancelled'
-                    ? 'red'
-                    : 'blue',
-              },
-            ]}
+            name="beenhere"
+            size={24}
+            color={
+              item?.status === 'completed'
+                ? 'green'
+                : item?.status === 'cancelled'
+                ? 'red'
+                : 'blue'
+            }
+            style={{
+              opacity:
+                item?.status === 'completed' ||
+                item?.status === 'cancelled' ||
+                upcoming
+                  ? 0.5
+                  : 1,
+            }}
           />
         </TouchableOpacity>
       </View>
-
       {open && (
-        <Modal visible={open} onRequestClose={handleClose}>
-          <AppointmentDetails
-            isDoctor={user.role === 'patient' ? false : true}
-            item={selectedItem}
-            open={open}
-            handleClose={handleClose}
-          />
-        </Modal>
+        <AppointmentDetails
+          isDoctor={user.role === 'patient' ? false : true}
+          item={selectedItem}
+          open={open}
+          handleClose={handleClose}
+        />
       )}
     </View>
   );
 };
 
 const AppointmentTableRow = ({item, index}) => {
-  if (!item) return null;
-
+  if (!item) {
+    return null;
+  }
   const upcoming = isAfter(parseISO(item.date), new Date());
   const today = isToday(parseISO(item.date), new Date());
   const over = !today && isBefore(parseISO(item.date), new Date());
 
   const getColor = () => {
-    if (item?.status === 'completed') return 'green';
-    if (item?.status === 'confirmed') {
-      if (upcoming) return 'blue';
-      if (today) return 'yellow';
-      if (over) return 'orange';
+    if (item?.status === 'completed') {
+      return 'green';
     }
-    if (item?.status === 'cancelled') return 'red';
-    return 'black'; // Default color
+    if (item?.status === 'confirmed') {
+      if (upcoming) {
+        return 'blue';
+      }
+      if (today) {
+        return 'purple';
+      }
+      if (over) {
+        return 'orange';
+      }
+    }
+    if (item?.status === 'cancelled') {
+      return 'red';
+    }
+    return '';
   };
 
   return (
-    <View style={styles.tableRow}>
-      <Text style={styles.tableCell}>{index + 1}</Text>
-      <Text style={styles.tableCell}>{item?.patientDetails.fullName}</Text>
-      <Text style={styles.tableCell}>
+    <View style={styles.row}>
+      <Text style={styles.cell}>{index + 1}</Text>
+      <Text style={styles.cell}>{item?.patientDetails.fullName}</Text>
+      <Text style={styles.cell}>
         {format(new Date(item?.createdAt), 'M/d/yyyy')}
       </Text>
-      <Text style={styles.tableCell}>
+      <Text style={styles.cell}>
         {format(new Date(item?.date), 'M/d/yyyy')} {item?.time}
       </Text>
-      <Text style={[styles.tableCell, {color: getColor()}]}>
+      <Text style={[styles.cell, styles.boldText, {color: getColor()}]}>
         {item?.status === 'confirmed' && upcoming && 'Upcoming'}
         {item?.status === 'confirmed' && today && 'Today'}
-        {item?.status === 'confirmed' && over && "Time's Up!"}
+        {item?.status === 'confirmed' && over && 'Time Up!'}
         {item?.status === 'completed' && 'Completed'}
         {item?.status === 'cancelled' && 'Cancelled'}
       </Text>
-      <View style={styles.tableCell}>
-        <TableRowAction item={item} />
-      </View>
+      <TableRowAction item={item} />
     </View>
   );
 };
 
-const AppointmentTableBody = ({filteredDoctorAppointments}) => {
-  if (filteredDoctorAppointments?.length === 0) {
+const AppointmentTableBody = ({filteredDoctorAppointment}) => {
+  if (!filteredDoctorAppointment || filteredDoctorAppointment.length === 0) {
     return <Text style={styles.noDataText}>No Data</Text>;
   }
 
   return (
     <FlatList
-      data={filteredDoctorAppointments}
+      data={filteredDoctorAppointment}
       renderItem={({item, index}) => (
         <AppointmentTableRow key={item._id} item={item} index={index} />
       )}
@@ -170,88 +171,88 @@ const AppointmentTableBody = ({filteredDoctorAppointments}) => {
   );
 };
 
-const DoctorAppointmentTable = ({dashboard, appointments}) => {
+export default function DoctorAppointmentTable({dashboard, appointments = []}) {
   const [filterValue, setFilterValue] = useState(dashboard ? 'today' : 'all');
 
   const handleFilterValue = data => {
     setFilterValue(data);
   };
 
-  const filteredDoctorAppointments = appointments.filter(appointment => {
-    if (filterValue === 'all') return true;
-    return appointment?.status === filterValue;
-  });
+  const filteredDoctorAppointment = filterDoctorAppointments(
+    appointments,
+    filterValue,
+  );
 
   return (
-    <View>
+    <View style={styles.container}>
       {!dashboard && (
         <View style={styles.filterContainer}>
           <Text>Filter By:</Text>
-          <select onChange={e => handleFilterValue(e.target.value)}>
-            <option value="all">All</option>
-            <option value="confirmed">Accepted</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <Picker
+            selectedValue={filterValue}
+            style={styles.picker}
+            onValueChange={(itemValue, itemIndex) =>
+              handleFilterValue(itemValue)
+            }>
+            <Picker.Item label="All" value="all" />
+            <Picker.Item label="Accepted" value="confirmed" />
+            <Picker.Item label="Completed" value="completed" />
+            <Picker.Item label="Cancelled" value="cancelled" />
+          </Picker>
         </View>
       )}
-
-      <View style={styles.tableContainer}>
-        <FlatList
-          data={filteredDoctorAppointments}
-          renderItem={({item, index}) => (
-            <AppointmentTableRow key={item._id} item={item} index={index} />
-          )}
-          keyExtractor={item => item._id}
-        />
-      </View>
+      <AppointmentTableBody
+        filteredDoctorAppointment={filteredDoctorAppointment}
+      />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  rowActionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  prescriptionButton: {
+  container: {
     padding: 10,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  buttonText: {
-    color: 'white',
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  icon: {
-    fontSize: 24,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  tableCell: {
-    flex: 1,
-    padding: 5,
-  },
-  noDataText: {
-    textAlign: 'center',
-    color: 'gray',
   },
   filterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  tableContainer: {
-    marginTop: 20,
+  picker: {
+    height: 50,
+    width: 150,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  cell: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  actionButton: {
+    padding: 5,
+    borderRadius: 5,
+  },
+  actionButtonText: {
+    color: 'white',
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noDataText: {
+    textAlign: 'center',
+    color: 'gray',
+  },
+  boldText: {
+    fontWeight: 'bold',
   },
 });
-
-export default DoctorAppointmentTable;

@@ -65,7 +65,7 @@ const BillSection = ({patientData}) => {
     console.log(patientData);
     createFreeAppointment({
       payload: {...patientData, totalFee},
-      navigation,
+      navigation, // Ensure navigation is passed from the component
     });
   };
 

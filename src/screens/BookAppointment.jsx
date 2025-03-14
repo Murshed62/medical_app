@@ -36,7 +36,7 @@ const formatDate = text => {
 const BookAppointment = () => {
   const [showPicker, setShowPicker] = useState(false);
   const navigation = useNavigation();
-  const {doctorId} = useRoute().params;
+  const {doctorId} = useRoute().params || {};
   console.log(doctorId);
 
   const {
