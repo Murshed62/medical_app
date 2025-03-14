@@ -5,87 +5,24 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
+  Modal,
+  StyleSheet,
+  ScrollView,
+  Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useStoreActions, useStoreState} from 'easy-peasy';
 import {format, isAfter, isBefore, isToday, parseISO} from 'date-fns';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import AppointmentDetails from '../AppointmentDetails/AppointDetails';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const AppointmentTable = ({filterValue}) => {
-  const {getPatient} = useStoreActions(action => action.patient);
-  const {patient, delteState} = useStoreState(state => state.patient);
-  const {updatedData} = useStoreState(state => state.testRecommendation);
-  const {deletedMedicin} = useStoreState(state => state.prescription);
-  const user = JSON.parse(AsyncStorage.getItem('user')) || null;
-  const userID = user?._id;
-
-  useEffect(() => {
-    getPatient(userID);
-  }, [getPatient, userID, delteState, updatedData, deletedMedicin]);
-
-  if (!patient) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
-  const appointments = patient?.appointments || [];
-  const filterAppointment = appointments.filter(
-    item => item.status === filterValue,
-  );
-
-  if (filterAppointment.length === 0) {
-    return <Text style={{textAlign: 'center', color: 'grey'}}>No Data</Text>;
-  }
-
-  return (
-    <FlatList
-      data={filterAppointment}
-      keyExtractor={item => item._id}
-      renderItem={({item, index}) => (
-        <AppointmentTableRow item={item} index={index} />
-      )}
-    />
-  );
-};
-
-const AppointmentTableRow = ({item, index}) => {
-  if (!item) return null;
-
-  const upcomming = isAfter(parseISO(item?.date), new Date());
-  const today = isToday(parseISO(item?.date));
-  const over = !today && isBefore(parseISO(item?.date), new Date());
-
-  const getColor = () => {
-    if (item?.status === 'completed') return 'green';
-    if (item?.status === 'confirmed') {
-      if (upcomming) return 'blue';
-      if (today) return 'orange';
-      if (over) return 'red';
-    }
-    if (item?.status === 'cancelled') return 'gray';
-    if (item?.status === 'panding') return 'purple';
-    return 'black';
-  };
-
-  return (
-    <View style={{padding: 10, borderBottomWidth: 1, borderColor: '#ccc'}}>
-      <Text>
-        {index + 1}. {item?.doctor?.firstName} {item?.doctor?.lastName}
-      </Text>
-      <Text>Created: {format(new Date(item?.createdAt), 'M/d/yyyy')}</Text>
-      <Text>
-        Schedule Start: {format(new Date(item?.date), 'M/d/yyyy')} {item?.time}
-      </Text>
-      <Text style={{color: getColor(), fontWeight: 'bold'}}>
-        {item?.status}
-      </Text>
-      <TableRowAction item={item} />
-    </View>
-  );
-};
+import {DataTable} from 'react-native-paper';
+import videoOn from '../../../assets/video-camera.png';
+import videoOff from '../../../assets/video-camera-off.png';
 
 const TableRowAction = ({item}) => {
+  const user = AsyncStorage.getItem('user');
   const {deletePatientAppointment} = useStoreActions(action => action.patient);
-  const {user} = useStoreState(state => state.user);
   const [open, setOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -100,41 +37,190 @@ const TableRowAction = ({item}) => {
   };
 
   if (!item) return null;
+
   const today = isToday(parseISO(item?.date));
-  const upcomming = isAfter(parseISO(item?.date), new Date());
+  const upcoming = isAfter(parseISO(item?.date), new Date());
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-      }}>
+    <View style={styles.actionRow}>
       <TouchableOpacity
         onPress={() => handleClickOpen(item)}
         disabled={
-          item?.status === 'panding' ||
-          item?.status === 'cancelled' ||
-          upcomming
+          item?.status === 'panding' || item?.status === 'cancelled' || upcoming
         }
-        style={{
-          backgroundColor: item?.status === 'panding' ? 'red' : 'blue',
-          padding: 8,
-          borderRadius: 5,
-        }}>
-        <Text style={{color: 'white'}}>Prescription</Text>
+        style={[
+          styles.button,
+          {backgroundColor: item?.status === 'panding' ? '#d32f2f' : '#1976d2'},
+        ]}>
+        <Text style={styles.buttonText}>Prescription</Text>
       </TouchableOpacity>
 
+      {today &&
+      item?.status !== 'completed' &&
+      item?.status !== 'cancelled' &&
+      item?.status !== 'panding' ? (
+        <TouchableOpacity onPress={() => Linking.openURL(item.googleMeetLink)}>
+          <Image source={videoOn} style={{marginLeft: 4}} />
+        </TouchableOpacity>
+      ) : (
+        <Image source={videoOff} style={{marginLeft: 4}} />
+      )}
+
       {open && (
-        <AppointmentDetails
-          isDoctor={user.role === 'patient' ? false : true}
-          item={selectedItem}
-          open={open}
-          handleClose={handleClose}
-        />
+        <Modal transparent visible={open}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {/* <AppointmentDetails
+                isDoctor={user.role == 'patient' ? false : true}
+                item={selectedItem}
+                open={open}
+                handleClose={handleClose}
+              /> */}
+              <TouchableOpacity onPress={handleClose}>
+                <Text style={{color: 'red'}}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
 };
 
-export default AppointmentTable;
+const AppointmentRow = ({item, index}) => {
+  if (!item) return null;
+
+  const upcoming = isAfter(parseISO(item?.date), new Date());
+  const today = isToday(parseISO(item?.date));
+  const over = !today && isBefore(parseISO(item?.date), new Date());
+
+  const getColor = () => {
+    if (item?.status === 'completed') return 'green';
+    if (item?.status === 'confirmed') {
+      if (upcoming) return 'blue';
+      if (today) return 'purple';
+      if (over) return 'orange';
+    }
+    if (item?.status === 'cancelled') return 'red';
+    if (item?.status === 'panding') return 'gray';
+    return '';
+  };
+
+  return (
+    <View style={styles.row}>
+      <Text style={styles.cell}>{index + 1}</Text>
+      <Text style={styles.cell}>
+        {item?.doctor?.firstName || 'N/A'} {item?.doctor?.lastName}
+      </Text>
+      <Text style={styles.cell}>
+        {format(new Date(item?.createdAt), 'M/d/yyyy')}
+      </Text>
+      <Text style={styles.cell}>
+        {format(new Date(item?.date), 'M/d/yyyy')} {item?.time}
+      </Text>
+      <Text style={[styles.cell, {color: getColor()}]}>{item?.status}</Text>
+      <TableRowAction item={item} />
+    </View>
+  );
+};
+
+const AppointmentTableBody = ({filterValue}) => {
+  const {getPatient} = useStoreActions(action => action.patient);
+  const {patient} = useStoreState(state => state.patient);
+  const [userID, setUserID] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await AsyncStorage.getItem('user');
+      const parsedUser = user ? JSON.parse(user) : null;
+      setUserID(parsedUser?._id);
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (userID) getPatient(userID);
+  }, [getPatient, userID]);
+
+  if (!patient) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="blue" />
+      </View>
+    );
+  }
+
+  const appointments = patient?.appointments || [];
+  const filteredAppointments = appointments.filter(
+    item => item.status === filterValue,
+  );
+
+  if (filteredAppointments.length === 0) {
+    return <Text style={styles.noData}>No Data</Text>;
+  }
+
+  return (
+    <FlatList
+      data={filteredAppointments}
+      keyExtractor={item => item._id}
+      renderItem={({item, index}) => (
+        <AppointmentRow item={item} index={index} />
+      )}
+    />
+  );
+};
+
+export default function AppointmentTable({filterValue}) {
+  const columns = [
+    'No',
+    'Docto Name',
+    'Created',
+    'Schedule Start',
+    'Status',
+    'Action',
+  ];
+  return (
+    <View style={{flex: 1, width: '100%'}}>
+      <ScrollView horizontal>
+        <DataTable>
+          <DataTable.Header>
+            {columns.map(column => (
+              <DataTable.Title key={column} numeric={column.align === 'right'}>
+                {column}
+              </DataTable.Title>
+            ))}
+          </DataTable.Header>
+
+          <AppointmentTableBody filterValue={filterValue} />
+        </DataTable>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {flex: 1, padding: 10, backgroundColor: '#fff'},
+  row: {
+    flexDirection: 'row',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  cell: {flex: 1, textAlign: 'center', fontSize: 14, marginLeft: 2},
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  button: {padding: 5, borderRadius: 5, marginLeft: 2},
+  buttonText: {color: '#fff', fontWeight: 'bold'},
+  center: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  noData: {textAlign: 'center', color: 'gray', fontSize: 16, marginTop: 20},
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {backgroundColor: '#fff', padding: 20, borderRadius: 10},
+});

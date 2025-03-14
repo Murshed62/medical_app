@@ -182,7 +182,7 @@ export default function DoctorAppointmentTable({dashboard, appointments = []}) {
     appointments,
     filterValue,
   );
-
+  console.log(filteredDoctorAppointment);
   return (
     <View style={styles.container}>
       {!dashboard && (

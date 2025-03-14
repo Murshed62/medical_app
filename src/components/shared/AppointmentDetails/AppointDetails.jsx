@@ -12,9 +12,10 @@ import {
 import {Appbar, Button, ActivityIndicator} from 'react-native-paper';
 import {useStoreActions, useStoreState} from 'easy-peasy';
 import Pdf from 'react-native-html-to-pdf';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
-  const {user} = useStoreState(state => state.user);
+  const user = AsyncStorage.getItem('user');
   const {createPrescription} = useStoreActions(actions => actions.prescription);
   const {getAppointmentById, resetAppointmentByIdData} = useStoreActions(
     actions => actions.appointment,

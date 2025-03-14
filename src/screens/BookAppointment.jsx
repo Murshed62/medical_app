@@ -79,6 +79,13 @@ const BookAppointment = () => {
       getSingleDoctor(doctorId).then(() => setLoading(false));
     }
   }, [getSingleDoctor, doctorId]);
+  const handleTime = data => {
+    setTimeValue(data.time);
+    setSlotID(data._id);
+  };
+  const singleSchedule = singleDoctor?.schedule.filter(
+    item => item._id === scheduleID,
+  );
 
   if (loading) {
     return (
@@ -165,18 +172,58 @@ const BookAppointment = () => {
 
       <Text style={styles.sectionTitle}>Choose a Slot:</Text>
       <View style={styles.buttonGroup}>
-        {scheduleID &&
-          singleDoctor.schedule
-            .find(s => s._id === scheduleID)
-            ?.slots?.map((item, index) => (
-              <Button
+        {singleSchedule[0]?.status === 'busy' ||
+        singleSchedule[0]?.slots.length === 0 ? (
+          <View
+            style={{
+              textAlign: 'center',
+              marginBottom: 10,
+              padding: 10,
+              borderWidth: 1,
+              borderColor: '#e0e0e0',
+              borderRadius: 8,
+              backgroundColor: '#f9f9f9',
+              alignItems: 'center',
+            }}>
+            <Text style={{color: 'gray', marginBottom: 5}}>
+              🛑 <Text style={{fontWeight: 'bold'}}>No Available Slots</Text>
+            </Text>
+            <Text style={{color: 'gray', textAlign: 'center'}}>
+              All time slots are currently occupied. Please check back later or
+              try selecting a different schedule.
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginBottom: 15,
+            }}>
+            {singleSchedule[0]?.slots?.map((item, index) => (
+              <TouchableOpacity
                 key={index}
-                mode={item.time === timeValue ? 'contained' : 'outlined'}
-                onPress={() => handleTimeSelection(item)}
-                style={styles.button}>
-                {item.time}
-              </Button>
+                disabled={
+                  item.status === 'unavailable' || item.status === 'booked'
+                }
+                onPress={() => handleTime(item)}
+                style={{
+                  minWidth: 80,
+                  padding: 10,
+                  margin: 5,
+                  borderRadius: 5,
+                  alignItems: 'center',
+                  backgroundColor:
+                    item.time === timeValue ? '#007bff' : '#e0e0e0',
+                }}>
+                <Text style={{color: 'white', fontWeight: 'bold'}}>
+                  {item.time}
+                </Text>
+              </TouchableOpacity>
             ))}
+          </View>
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>Patient Details (Optional):</Text>

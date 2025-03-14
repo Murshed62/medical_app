@@ -1,12 +1,15 @@
 import React, {useState} from 'react';
 import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import DoctorProfileModal from '../../../../modal/DoctorProfileModal';
 
 const SpecialitiesCard = ({item, isSingle}) => {
+  console.log(item);
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
-
+  if (!item) {
+    return null; // Return early if item is null or undefined
+  }
   const handleOpenModal = () => {
     setModalVisible(true);
   };
@@ -16,7 +19,10 @@ const SpecialitiesCard = ({item, isSingle}) => {
   };
 
   const handleBookNow = () => {
-    navigation.navigate('BookAppointment', {doctorId: item?._id});
+    navigation.navigate('Dashboard', {
+      screen: 'BookAppointment',
+      params: {doctorId: item?._id},
+    });
   };
 
   return (

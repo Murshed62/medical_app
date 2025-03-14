@@ -26,6 +26,7 @@ import dashboardIcon from './src/assets/dashboard.png';
 import searchIcon from './src/assets/bottomSearch.png';
 import profileIcon from './src/assets/bottomUser.png';
 import DoctorAppointmentTable from './src/components/shared/DoctorAppointmentTable/DoctorAppointmentTable';
+import MyAppointments from './src/components/shared/MyAppointments/MyAppointments';
 
 enableScreens();
 
@@ -48,6 +49,7 @@ const DashboardStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
     <Stack.Screen name="Dashboard" component={Dashboard} />
     <Stack.Screen name="MyProfile" component={MyProfile} />
+    <Stack.Screen name="MyAppointments" component={MyAppointments} />
     <Stack.Screen name="FindDoctors" component={FindDoctors} />
     <Stack.Screen name="BookAppointment" component={BookAppointment} />
     <Stack.Screen name="PaymentPage" component={PaymentPage} />
@@ -73,7 +75,7 @@ const TabNavigator = () => (
       }}
     />
     <Tab.Screen
-      name="FindDoctors"
+      name="Find Doctors"
       component={FindDoctors}
       options={{
         tabBarIcon: () => <Image source={searchIcon} />,

@@ -135,7 +135,7 @@ const MyProfile = () => {
     setOpenCP(false);
   };
   const handleAppointment = () => {
-    navigation.navigate('DoctorAppointmentTable');
+    navigation.navigate('MyAppointments');
   };
 
   if (!user && !patient) {
