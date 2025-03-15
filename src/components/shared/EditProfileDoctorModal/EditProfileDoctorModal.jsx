@@ -1,118 +1,364 @@
-import React from 'react';
-import {View, Text, TextInput, ScrollView} from 'react-native';
-import {Modal, Portal, Button, RadioButton} from 'react-native-paper';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Picker,
+  Alert,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
-import {Picker} from '@react-native-picker/picker';
-import specialitys from '../../../utils/specialties';
+import {useStoreActions, useStoreState} from 'easy-peasy';
+import { checkUpdatedData } from '../../../utils/index.js';
 
-const EditProfileDoctorModal = ({
-  visible,
-  onDismiss,
-  userID,
-  updateProfile,
-}) => {
-  const {control, handleSubmit, reset} = useForm();
+const specialities = [
+  {id: '1', name: 'Anesthesiology'},
+  {id: '2', name: 'Cardiology'},
+  {id: '3', name: 'Cardiothoracic Surgery'},
+  {id: '4', name: 'Colorectal Surgery'},
+  {id: '5', name: 'Dentistry'},
+  {id: '6', name: 'Dermatology and Venereology'},
+  {id: '7', name: 'Gastroenterology'},
+  {id: '8', name: 'General Physician'},
+  {id: '9', name: 'General Surgery'},
+  {id: '10', name: 'Gynaecology and Obstetrics'},
+  {id: '11', name: 'Haematology'},
+  {id: '12', name: 'Hepatology'},
+  {id: '13', name: 'Internal medicine'},
+  {id: '14', name: 'Nephrology'},
+  {id: '15', name: 'Neuromedicine'},
+  {id: '16', name: 'Neurosurgery'},
+  {id: '17', name: 'Oncology'},
+  {id: '18', name: 'Oral and Maxillofacial Surgery'},
+  {id: '19', name: 'Orthopedics'},
+  {id: '20', name: 'Otolaryngology(ENT)'},
+  {id: '21', name: 'Pediatric Surgery'},
+  {id: '22', name: 'Pediatrics'},
+  {id: '23', name: 'Plastic Surgery'},
+  {id: '24', name: 'Psychiatry'},
+  {id: '25', name: 'Radiology'},
+  {id: '26', name: 'Reproductive Endocrinology and Infertility'},
+  {id: '27', name: 'Respiratory medicine'},
+  {id: '28', name: 'Rheumatology'},
+  {id: '29', name: 'Urology'},
+  {id: '30', name: 'Vascular Surgery'},
+  {id: '31', name: 'Ophthalmology'},
+  {id: '32', name: 'Family Medicine'},
+  {id: '33', name: 'Physical Medicine & Rehabilitation'},
+];
+
+const EditProfileDoctorModal = ({open, handleClose, userID}) => {
+  const {register, handleSubmit, control, reset} = useForm();
+  const {updateProfile} = useStoreActions(action => action.doctor);
+  const {doctor} = useStoreState(state => state.doctor);
 
   const onSubmit = data => {
-    updateProfile({userID, data});
+    const updatedFormData = checkUpdatedData(data);
+    updateProfile({userID, updatedFormData});
     reset();
-    onDismiss();
+    handleClose();
   };
 
   return (
-    <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={{
-          backgroundColor: 'white',
-          padding: 20,
-          borderRadius: 10,
-        }}>
-        <ScrollView>
-          <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 10}}>
-            Personal Information
-          </Text>
+    <ScrollView style={styles.modalContainer}>
+      <Text style={styles.heading}>Personal Information</Text>
+      <View style={styles.formGroup}>
+        {/* First Name */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="First Name"
+            />
+          )}
+          name="firstName"
+          defaultValue=""
+        />
+        {/* Last Name */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Last Name"
+            />
+          )}
+          name="lastName"
+          defaultValue=""
+        />
+        {/* Date of Birth */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Date of Birth"
+            />
+          )}
+          name="dateOfBirth"
+          defaultValue=""
+        />
+        {/* Mobile */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Mobile"
+            />
+          )}
+          name="mobile"
+          defaultValue=""
+        />
+        {/* NID/Passport */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="NID/Passport Number"
+            />
+          )}
+          name="nidOrPassport"
+          defaultValue=""
+        />
+        {/* Nationality */}
+        <Controller
+          control={control}
+          render={({field: {onChange, value}}) => (
+            <Picker
+              selectedValue={value}
+              onValueChange={onChange}
+              style={styles.input}>
+              <Picker.Item label="Bangladesh" value="Bangladesh" />
+            </Picker>
+          )}
+          name="nationality"
+          defaultValue="Bangladesh"
+        />
+        {/* Gender */}
+        <Controller
+          control={control}
+          render={({field: {onChange, value}}) => (
+            <Picker
+              selectedValue={value}
+              onValueChange={onChange}
+              style={styles.input}>
+              <Picker.Item label="Male" value="male" />
+              <Picker.Item label="Female" value="female" />
+              <Picker.Item label="Other" value="other" />
+            </Picker>
+          )}
+          name="gender"
+          defaultValue="male"
+        />
+        {/* Fee */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Fee"
+              keyboardType="numeric"
+            />
+          )}
+          name="fee"
+          defaultValue=""
+        />
+        {/* Organization */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Organization"
+            />
+          )}
+          name="organization"
+          defaultValue=""
+        />
+        {/* Biography */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Biography"
+              multiline
+              numberOfLines={4}
+            />
+          )}
+          name="biography"
+          defaultValue=""
+        />
+      </View>
+      <Text style={styles.heading}>Professional Information</Text>
+      <View style={styles.formGroup}>
+        {/* Title */}
+        <Controller
+          control={control}
+          render={({field: {onChange, value}}) => (
+            <Picker
+              selectedValue={value}
+              onValueChange={onChange}
+              style={styles.input}>
+              <Picker.Item label="Dr." value="Dr." />
+            </Picker>
+          )}
+          name="title"
+          defaultValue="Dr."
+        />
+        {/* Designation */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Designation"
+            />
+          )}
+          name="designation"
+          defaultValue=""
+        />
+        {/* BMDC Number */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="BMDC Number"
+            />
+          )}
+          name="bmdcNumber"
+          defaultValue=""
+        />
+        {/* BMDC Expiry Date */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="BMDC Expiry Date"
+            />
+          )}
+          name="bmdcExpiryDate"
+          defaultValue=""
+        />
+        {/* Degrees */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Degrees"
+            />
+          )}
+          name="degrees"
+          defaultValue=""
+        />
+        {/* Speciality */}
+        <Controller
+          control={control}
+          render={({field: {onChange, value}}) => (
+            <Picker
+              selectedValue={value}
+              onValueChange={onChange}
+              style={styles.input}>
+              {specialities.map(item => (
+                <Picker.Item
+                  key={item.id}
+                  label={item.name}
+                  value={item.name}
+                />
+              ))}
+            </Picker>
+          )}
+          name="speciality"
+          defaultValue=""
+        />
+        {/* Years of Experience */}
+        <Controller
+          control={control}
+          render={({field: {onChange, onBlur, value}}) => (
+            <TextInput
+              style={styles.input}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Years of Experience"
+              keyboardType="numeric"
+            />
+          )}
+          name="yearOfExperience"
+          defaultValue=""
+        />
+      </View>
 
-          <Controller
-            control={control}
-            name="firstName"
-            render={({field: {onChange, value}}) => (
-              <TextInput
-                placeholder="First Name"
-                value={value}
-                onChangeText={onChange}
-                style={{borderWidth: 1, padding: 8, marginBottom: 10}}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="lastName"
-            render={({field: {onChange, value}}) => (
-              <TextInput
-                placeholder="Last Name"
-                value={value}
-                onChangeText={onChange}
-                style={{borderWidth: 1, padding: 8, marginBottom: 10}}
-              />
-            )}
-          />
-
-          <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 10}}>
-            Professional Information
-          </Text>
-
-          <Controller
-            control={control}
-            name="speciality"
-            render={({field: {onChange, value}}) => (
-              <Picker
-                selectedValue={value}
-                onValueChange={onChange}
-                style={{borderWidth: 1, marginBottom: 10}}>
-                {specialitys.map(item => (
-                  <Picker.Item
-                    key={item.id}
-                    label={item.name}
-                    value={item.name}
-                  />
-                ))}
-              </Picker>
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="gender"
-            render={({field: {onChange, value}}) => (
-              <RadioButton.Group onValueChange={onChange} value={value}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <RadioButton value="male" />
-                  <Text>Male</Text>
-                  <RadioButton value="female" />
-                  <Text>Female</Text>
-                  <RadioButton value="other" />
-                  <Text>Other</Text>
-                </View>
-              </RadioButton.Group>
-            )}
-          />
-
-          <Button
-            mode="contained"
-            onPress={handleSubmit(onSubmit)}
-            style={{marginTop: 20}}>
-            Submit
-          </Button>
-          <Button mode="outlined" onPress={onDismiss} style={{marginTop: 10}}>
-            Cancel
-          </Button>
-        </ScrollView>
-      </Modal>
-    </Portal>
+      <Button title="Submit" onPress={handleSubmit(onSubmit)} />
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  formGroup: {
+    marginBottom: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+});
 
 export default EditProfileDoctorModal;

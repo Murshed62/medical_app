@@ -1,6 +1,7 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-import BecomeADoctorForm from '../../../pages/BecomeADoctorForm/BecomeADoctorForm';
+import BecomeADoctorForm from '../BecomeADoctorForm/BecomeADoctorForm';
+
 
 const CreateNewAccount = () => {
   return (

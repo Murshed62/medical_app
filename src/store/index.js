@@ -27,6 +27,7 @@ const userModel = {
   isLogIn: false,
   user: null, // Initially set to null
   // Fetch user data from AsyncStorage
+
   initializeUser: thunk(async actions => {
     const storedUser = await getUserFromStorage();
     actions.addUser(storedUser);
@@ -825,8 +826,16 @@ const superAdminModel = {
   }),
 };
 
+const profileImageModel = {
+  profileImage: null, // Initial value is null
+  setProfileImage: (state, imageUri) => {
+    state.profileImage = imageUri;
+  },
+};
+
 const store = createStore({
   user: userModel,
+  profileImage: profileImageModel,
   doctor: doctorModel,
   patient: patientModel,
   testRecommendation: testRecommendationModel,

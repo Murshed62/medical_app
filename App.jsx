@@ -20,13 +20,19 @@ import BookAppointment from './src/screens/BookAppointment';
 import PaymentPage from './src/screens/PaymentPage';
 import HealthHub from './src/screens/HealthHub';
 import SuccessFreeAppointment from './src/components/shared/SuccessFreeAppointment/SuccessFreeAppointment';
+import DoctorAppointmentTable from './src/components/shared/DoctorAppointmentTable/DoctorAppointmentTable';
+import MyAppointments from './src/components/shared/MyAppointments/MyAppointments';
 
 // Icons
 import dashboardIcon from './src/assets/dashboard.png';
 import searchIcon from './src/assets/bottomSearch.png';
 import profileIcon from './src/assets/bottomUser.png';
-import DoctorAppointmentTable from './src/components/shared/DoctorAppointmentTable/DoctorAppointmentTable';
-import MyAppointments from './src/components/shared/MyAppointments/MyAppointments';
+import DoctorDashboard from './src/components/DoctorComponents/DoctorDashboard/DoctorDashboard';
+import DoctorAppointments from './src/components/DoctorComponents/DoctorAppointments/DoctorAppointments';
+import MySchedule from './src/components/DoctorComponents/MySchedule/MySchedule';
+import RequestedAppointment from './src/components/DoctorComponents/RequestedAppointment/RequestedAppointment';
+import DoctorProfile from './src/components/DoctorComponents/DoctorProfile/DoctorProfile';
+import ChangePassword from './src/components/shared/ChangePassword/ChangePassword';
 
 enableScreens();
 
@@ -34,7 +40,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// ✅ **Auth Stack for Login, Register & ForgotPassword**
+// ✅ **Auth Stack**
 const AuthStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
     <Stack.Screen name="Login" component={Login} />
@@ -44,7 +50,7 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-// ✅ **Dashboard Stack (Includes PaymentPage)**
+// ✅ **Dashboard Stack for Patients**
 const DashboardStack = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
     <Stack.Screen name="Dashboard" component={Dashboard} />
@@ -64,31 +70,41 @@ const DashboardStack = () => (
   </Stack.Navigator>
 );
 
-// ✅ **Bottom Tab Navigator**
+// ✅ **Bottom Tab Navigator for Patients**
 const TabNavigator = () => (
   <Tab.Navigator screenOptions={{headerShown: false}}>
     <Tab.Screen
       name="Dashboard"
       component={DashboardStack}
-      options={{
-        tabBarIcon: () => <Image source={dashboardIcon} />,
-      }}
+      options={{tabBarIcon: () => <Image source={dashboardIcon} />}}
     />
     <Tab.Screen
       name="Find Doctors"
       component={FindDoctors}
-      options={{
-        tabBarIcon: () => <Image source={searchIcon} />,
-      }}
+      options={{tabBarIcon: () => <Image source={searchIcon} />}}
     />
     <Tab.Screen
       name="MyProfile"
       component={MyProfile}
-      options={{
-        tabBarIcon: () => <Image source={profileIcon} />,
-      }}
+      options={{tabBarIcon: () => <Image source={profileIcon} />}}
     />
   </Tab.Navigator>
+);
+
+// ✅ **Doctor Stack for Doctor Role**
+const DoctorStack = () => (
+  <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Screen name="DoctorDashboard" component={DoctorDashboard} />
+    <Stack.Screen name="DoctorAppointments" component={DoctorAppointments} />
+    <Stack.Screen name="MySchedule" component={MySchedule} />
+    <Stack.Screen
+      name="RequestedAppointments"
+      component={RequestedAppointment}
+    />
+    <Stack.Screen name="DoctorProfile" component={DoctorProfile} />
+    <Stack.Screen name="ChangePassword" component={ChangePassword} />
+    <Stack.Screen name="OtpVerification" component={OtpVerification} />
+  </Stack.Navigator>
 );
 
 // ✅ **Logout Screen**
@@ -120,42 +136,87 @@ const LogoutScreen = ({navigation}) => {
   );
 };
 
-// ✅ **Drawer Navigator (Now Includes PaymentPage)**
+// ✅ **Drawer Navigator with Role-Based Screens**
 const DrawerNavigator = () => {
   const {user} = useStoreState(state => state.user);
 
   return (
     <Drawer.Navigator
-      initialRouteName="TabNavigator"
+      initialRouteName={
+        user
+          ? user.role === 'patient'
+            ? 'TabNavigator'
+            : 'DoctorStack'
+          : 'Auth'
+      }
       screenOptions={{headerShown: false}}>
-      <Drawer.Screen
-        name="TabNavigator"
-        component={TabNavigator}
-        options={{title: 'Dashboard'}}
-      />
-      <Drawer.Screen
-        name="DoctorAppointmentTable"
-        component={DoctorAppointmentTable}
-        options={{title: 'My Appointments'}}
-      />
+      {/* Authentication Screens */}
+      {!user && (
+        <Drawer.Screen
+          name="Auth"
+          component={AuthStack}
+          options={{title: 'Login / Register'}}
+        />
+      )}
 
-      <Drawer.Screen
-        name="HealthHub"
-        component={HealthHub}
-        options={{title: 'HealthHub'}}
-      />
+      {/* Patient Screens */}
+      {user?.role === 'patient' && (
+        <>
+          <Drawer.Screen
+            name="TabNavigator"
+            component={TabNavigator}
+            options={{title: 'Dashboard'}}
+          />
+          <Drawer.Screen
+            name="DoctorAppointmentTable"
+            component={DoctorAppointmentTable}
+            options={{title: 'My Appointments'}}
+          />
+          <Drawer.Screen
+            name="HealthHub"
+            component={HealthHub}
+            options={{title: 'HealthHub'}}
+          />
+        </>
+      )}
 
-      {user ? (
+      {/* Doctor Screens */}
+      {user?.role === 'doctor' && (
+        <>
+          <Drawer.Screen
+            name="DoctorStack"
+            component={DoctorStack}
+            options={{title: 'Doctor Dashboard'}}
+          />
+          <Drawer.Screen
+            name="DoctorAppointments"
+            component={DoctorAppointments}
+            options={{title: 'Doctor Appointments'}}
+          />
+          <Drawer.Screen
+            name="MySchedule"
+            component={MySchedule}
+            options={{title: 'My Schedule'}}
+          />
+          <Drawer.Screen
+            name="DoctorProfile"
+            component={DoctorProfile}
+            options={{title: 'My Profile'}}
+          />
+          <Drawer.Screen
+            name="ChangePassword"
+            component={ChangePassword}
+            options={{title: 'Change Password'}}
+          />
+        </>
+      )}
+
+      {/* Logout */}
+      {user && (
         <Drawer.Screen
           name="Logout"
           component={LogoutScreen}
           options={{title: 'Logout'}}
-        />
-      ) : (
-        <Drawer.Screen
-          name="AuthStack"
-          component={AuthStack}
-          options={{title: 'Login / Register'}}
         />
       )}
     </Drawer.Navigator>

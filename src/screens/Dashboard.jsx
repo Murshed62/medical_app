@@ -20,7 +20,9 @@ import HomeBlogs from '../components/shared/HomeBlogs/HomeBlogs';
 import {useStoreState} from 'easy-peasy';
 
 const Dashboard = () => {
-  const {user} = useStoreState(state => state.user);
+  const {user} = useStoreState(state => state.user); // Retrieve the user
+  const {profileImage} = useStoreState(state => state.profileImage); // Access profile image from Easy Peasy store
+  console.log(profileImage);
   const navigation = useNavigation();
   const [scrollY, setScrollY] = useState(new Animated.Value(0));
 
@@ -74,7 +76,11 @@ const Dashboard = () => {
               navigation.navigate('TabNavigator');
             }
           }}>
-          <Image source={userIcon} style={styles.userIcon} />
+          {/* Display uploaded image or fallback to userIcon */}
+          <Image
+            source={profileImage ? {uri: profileImage} : userIcon}
+            style={styles.userIcon}
+          />
         </TouchableOpacity>
 
         {/* Search Bar */}

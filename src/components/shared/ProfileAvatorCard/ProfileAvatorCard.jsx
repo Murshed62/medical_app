@@ -8,15 +8,17 @@ import {
   Platform,
 } from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
-import {useStoreActions, useStoreState} from 'easy-peasy';
+import {useStoreActions, useStoreState} from 'easy-peasy'; // Import hooks for Easy Peasy
 import {launchImageLibrary} from 'react-native-image-picker';
 
 export const ProfileAvatorCard = ({item}) => {
   console.log('item dekhte chai', item);
+
   const {control, handleSubmit, reset} = useForm();
-  const {updateDoctorImage} = useStoreActions(action => action.doctor);
-  const {updatePatientImage} = useStoreActions(action => action.patient);
-  const {user} = useStoreState(state => state.user);
+  const {updateDoctorImage} = useStoreActions(actions => actions.doctor); // Action for doctor image update
+  const {updatePatientImage} = useStoreActions(actions => actions.patient); // Action for patient image update
+  const {updateUserImage} = useStoreActions(actions => actions.user); // Action to update user image in global store
+  const {user} = useStoreState(state => state.user); // Accessing current user from store
   const userID = item?._id;
 
   const onSubmit = async data => {
@@ -26,11 +28,15 @@ export const ProfileAvatorCard = ({item}) => {
       type: 'image/jpeg',
       name: 'profile.jpg',
     });
+
+    // Handle image update based on user role
     if (user.role === 'doctor') {
       updateDoctorImage({userID, formData});
     } else if (user.role === 'patient') {
       updatePatientImage({userID, formData});
     }
+
+    // Reset the form state
     reset();
   };
 
@@ -43,14 +49,33 @@ export const ProfileAvatorCard = ({item}) => {
     });
 
     if (!result.didCancel && !result.error) {
-      onChange(result.assets[0]);
+      const selectedImage = result.assets[0];
+      onChange(selectedImage); // Update the form state with the selected image
+
+      // Create FormData for uploading the image
+      const formData = new FormData();
+      formData.append('image', {
+        uri: selectedImage.uri,
+        type: selectedImage.type,
+        name: selectedImage.fileName || 'profile.jpg',
+      });
+
+      // Save the picked image URI to the global store (Easy Peasy)
+      updateUserImage(selectedImage.uri); // Save the image URI in the store
+
+      // Upload image based on user role
+      if (user.role === 'doctor') {
+        updateDoctorImage({userID, formData});
+      } else if (user.role === 'patient') {
+        updatePatientImage({userID, formData});
+      }
     }
   };
 
   return (
     <View style={styles.card}>
       <Image
-        source={{uri: user.role === 'doctor' ? item?.profile : item?.image}}
+        source={{uri: user.role === 'doctor' ? item?.profile : item?.image}} // Use profile or image based on role
         style={styles.avatar}
         alt="No image uploaded"
       />
@@ -61,14 +86,16 @@ export const ProfileAvatorCard = ({item}) => {
           render={({field: {onChange}}) => (
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={() => pickImage(onChange)}>
+              onPress={() => pickImage(onChange)} // Call pickImage when button is pressed
+            >
               <Text style={styles.uploadButtonText}>Choose New Photo</Text>
             </TouchableOpacity>
           )}
         />
         <TouchableOpacity
           style={styles.submitButton}
-          onPress={handleSubmit(onSubmit)}>
+          onPress={handleSubmit(onSubmit)} // Handle form submission
+        >
           <Text style={styles.submitButtonText}>Upload New Photo</Text>
         </TouchableOpacity>
       </View>

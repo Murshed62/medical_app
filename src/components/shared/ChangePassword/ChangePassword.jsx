@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,68 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
 import {useStoreState} from 'easy-peasy';
+import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChangePassword = ({handleClose}) => {
   const {control, handleSubmit, reset} = useForm();
   const {user} = useStoreState(state => state.user);
+  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = data => {
-    console.log(data);
-    // Add logic to handle password change here
-    reset(); // Clear the form after submission
-    handleClose();
+  const onSubmit = async data => {
+    try {
+      setLoading(true);
+      console.log('Sending request...');
+
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('No user token found!');
+      }
+
+      const response = await fetch('https://yourapi.com/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: user?.credential,
+          oldPassword: data.oldPass,
+          newPassword: data.newPass,
+        }),
+      });
+
+      console.log('Response status:', response.status);
+
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      setLoading(false);
+
+      if (response.ok) {
+        Alert.alert('Success', 'Password changed successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('DoctorStack');
+              reset();
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', result.message || 'Failed to change password');
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error('Error:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
+    }
   };
 
   return (
@@ -26,18 +75,21 @@ const ChangePassword = ({handleClose}) => {
       <View style={styles.card}>
         <Text style={styles.title}>Change Password</Text>
         <View style={styles.form}>
+          {/* Email (Read-only) */}
           <Controller
             control={control}
             name="email"
-            render={({field: {value}}) => (
+            render={() => (
               <TextInput
-                style={styles.input}
-                value={user?.email}
+                style={[styles.input, styles.disabledInput]}
+                value={user?.credential}
                 placeholder="Email"
                 editable={false}
               />
             )}
           />
+
+          {/* Old Password */}
           <Controller
             control={control}
             name="oldPass"
@@ -53,6 +105,8 @@ const ChangePassword = ({handleClose}) => {
             )}
             rules={{required: 'Old Password is required'}}
           />
+
+          {/* New Password */}
           <Controller
             control={control}
             name="newPass"
@@ -68,10 +122,17 @@ const ChangePassword = ({handleClose}) => {
             )}
             rules={{required: 'New Password is required'}}
           />
+
+          {/* Confirm Button */}
           <TouchableOpacity
             style={styles.button}
-            onPress={handleSubmit(onSubmit)}>
-            <Text style={styles.buttonText}>Confirm</Text>
+            onPress={handleSubmit(onSubmit)}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Confirm</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -115,6 +176,9 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     marginBottom: 15,
+  },
+  disabledInput: {
+    backgroundColor: '#f0f0f0',
   },
   button: {
     backgroundColor: '#1976d2',
