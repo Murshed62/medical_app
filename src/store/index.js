@@ -492,9 +492,10 @@ const prescriptionModel = {
   data: null,
   deletedMedicin: null,
   createPresData: null,
-  updatedDiag: null,
+  updatedData: null,
   medicineData: null,
   instructionData: null,
+  getPrescriptionByIdData: null,
   addDeletedMedicin: action((state, payload) => {
     state.deletedMedicin = payload;
   }),
@@ -508,30 +509,31 @@ const prescriptionModel = {
     state.createPresData = payload;
   }),
   createPrescription: thunk(async (actions, payload) => {
-    const {diagnosis} = payload.data;
+    console.log(payload.data);
+    const {problem} = payload.data;
     const {appointmentID} = payload;
     const {data} = await axios.post(
       'https://api.surelinehealth.com/api/prescriptions',
       {
-        diagnosis,
+        problem,
         appointmentID,
       },
     );
     actions.addCreatePress(data);
   }),
-  addUpdatedDiag: action((state, payload) => {
-    state.updatedDiag = payload;
+  addUpdatedPrescriptionData: action((state, payload) => {
+    state.updatedData = payload;
   }),
-  updateDiagnosis: thunk(async (actions, payload) => {
+  updatePrescription: thunk(async (actions, payload) => {
     const {id} = payload;
-    const {diagnosis} = payload.data;
+    const {data: updatedData} = payload;
     const {data} = await axios.patch(
       `https://api.surelinehealth.com/api/prescriptions/${id}`,
       {
-        diagnosis,
+        updatedData,
       },
     );
-    actions.addUpdatedDiag(data);
+    actions.addUpdatedPrescriptionData(data);
   }),
   addMedicineData: action((state, payload) => {
     state.medicineData = payload;
@@ -556,14 +558,24 @@ const prescriptionModel = {
   }),
   updateAdditionalInstruction: thunk(async (actions, payload) => {
     const {prescriptionID} = payload;
-    const {instruction} = payload.data;
+    const {advice} = payload.data;
     const {data} = await axios.patch(
       `https://api.surelinehealth.com/api/prescriptions/${prescriptionID}`,
       {
-        instruction,
+        advice,
       },
     );
     actions.addAdditionalInstruction(data);
+  }),
+  addGetPrescriptionByid: action((state, payload) => {
+    state.getPrescriptionByIdData = payload;
+  }),
+  getPrescriptionById: thunk(async (actions, {id}) => {
+    const {data} = await axios.get(
+    `https://api.surelinehealth.com/api/prescriptions/${id}`
+    );
+
+    actions.addGetPrescriptionByid(data);
   }),
 };
 const medicalRecordModel = {

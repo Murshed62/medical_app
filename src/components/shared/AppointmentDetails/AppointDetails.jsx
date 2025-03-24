@@ -1,95 +1,62 @@
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Alert,
-  StyleSheet,
-} from 'react-native';
-import {Appbar, Button, ActivityIndicator} from 'react-native-paper';
+import React, {useEffect} from 'react';
+import {View, Text, Modal, ScrollView, StyleSheet, Image} from 'react-native';
+import {Appbar, Button} from 'react-native-paper';
 import {useStoreActions, useStoreState} from 'easy-peasy';
-import Pdf from 'react-native-html-to-pdf';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useRoute, useNavigation} from '@react-navigation/native';
+import Prescription from '../Prescription/Prescription';
+import backArrow from '../../../assets/back.png';
+import download from '../../../assets/download.png';
 
-const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
-  const user = AsyncStorage.getItem('user');
+const AppointmentDetails = ({open, handleClose, isDoctor}) => {
+  const navigation = useNavigation(); // Navigation Hook
+  const route = useRoute();
+  const {appointment} = route.params || {};
+
+  console.log(appointment._id);
+
   const {createPrescription} = useStoreActions(actions => actions.prescription);
-  const {getAppointmentById, resetAppointmentByIdData} = useStoreActions(
+
+  const {getAppointmentByid, resetAppointmentByIdData} = useStoreActions(
     actions => actions.appointment,
   );
   const {appointmentByIdData} = useStoreState(state => state.appointment);
 
-  const [problem, setProblem] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  const id = appointment?._id;
   useEffect(() => {
-    if (item?._id) {
-      getAppointmentById(item._id);
-    }
-  }, [item, getAppointmentById]);
-
-  const handlePrescriptionSubmit = () => {
-    if (!problem) return Alert.alert('Error', 'Please enter a problem.');
-    createPrescription({data: {problem}, appointmentID: item?._id});
-    setProblem('');
-  };
-
-  const generatePDF = async () => {
-    setLoading(true);
-    const options = {
-      html: `<h1>Prescription</h1><p>${
-        appointmentByIdData?.prescription || 'No prescription yet.'
-      }</p>`,
-      fileName: 'prescription',
-      directory: 'Documents',
-    };
-    const file = await Pdf.convert(options);
-    Alert.alert('PDF Saved', `File saved at ${file.filePath}`);
-    setLoading(false);
-  };
+    getAppointmentByid(id);
+  }, [getAppointmentByid, id]);
+  console.log(appointmentByIdData);
 
   return (
     <Modal visible={open} animationType="slide" onRequestClose={handleClose}>
       <Appbar.Header>
-        <Appbar.BackAction onPress={handleClose} />
+        <Appbar.Action
+          icon={() => (
+            <Image source={backArrow} style={{width: 24, height: 24}} />
+          )}
+          onPress={() => navigation.goBack()}
+        />
         <Appbar.Content title="Prescription" />
-        <Button onPress={generatePDF} disabled={loading}>
-          Download
+        <Button
+          mode="text"
+          style={{marginRight: 15}}
+          onPress={() => console.log('Download Pressed')}>
+          <Image source={download} style={{width: 24, height: 24}} />
         </Button>
       </Appbar.Header>
+
       <ScrollView style={styles.container}>
-        {appointmentByIdData ? (
-          <View>
-            <Text>
-              Doctor: {appointmentByIdData?.doctor?.firstName}{' '}
-              {appointmentByIdData?.doctor?.lastName}
-            </Text>
-            <Text>Date: {appointmentByIdData?.date}</Text>
-            <Text>Status: {appointmentByIdData?.status}</Text>
-            {appointmentByIdData.prescription ? (
-              <Text>Prescription: {appointmentByIdData.prescription}</Text>
-            ) : isDoctor ? (
-              <View>
-                <TextInput
-                  placeholder="Enter problem"
-                  value={problem}
-                  onChangeText={setProblem}
-                  style={styles.input}
-                />
-                <Button mode="contained" onPress={handlePrescriptionSubmit}>
-                  Start Prescription
-                </Button>
-              </View>
-            ) : (
-              <Text>No prescription provided yet.</Text>
-            )}
-          </View>
-        ) : (
-          <ActivityIndicator animating={true} />
-        )}
+        <View>
+          {appointmentByIdData.prescription ? (
+            <Prescription
+              appointmentByIdData={appointmentByIdData}
+              item={appointmentByIdData}
+            />
+          ) : (
+            <Text>No prescription provided yet.</Text>
+          )}
+          {}
+        </View>
       </ScrollView>
     </Modal>
   );
@@ -98,11 +65,6 @@ const AppointmentDetails = ({item, open, handleClose, isDoctor}) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-  },
-  input: {
-    borderWidth: 1,
-    padding: 8,
-    marginBottom: 10,
   },
 });
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272963516554",
+    "project_id": "sl-notification-8863b",
+    "storage_bucket": "sl-notification-8863b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272963516554:android:bc1d1c90468317e13cd573",
+        "android_client_info": {
+          "package_name": "com.medical_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDEtNtUwJVWwAhhFfawDGhN_CThF5Q-ZI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

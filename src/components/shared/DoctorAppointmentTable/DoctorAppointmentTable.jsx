@@ -24,6 +24,7 @@ const TableRowAction = ({item}) => {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const handleClickOpen = item => {
+    if (!item) return;
     setSelectedItem(item);
     setOpen(true);
   };
@@ -33,11 +34,10 @@ const TableRowAction = ({item}) => {
     setSelectedItem(null);
   };
 
-  if (!item) {
-    return null;
-  }
-  const today = isToday(parseISO(item?.date), new Date());
-  const upcoming = isAfter(parseISO(item?.date), new Date());
+  if (!item) return null;
+
+  const today = isToday(parseISO(item.date));
+  const upcoming = isAfter(parseISO(item.date), new Date());
   const id = item?._id;
 
   return (
@@ -49,9 +49,7 @@ const TableRowAction = ({item}) => {
         }
         style={[
           styles.actionButton,
-          {
-            backgroundColor: item?.status === 'pending' ? 'red' : 'blue',
-          },
+          {backgroundColor: item?.status === 'pending' ? 'red' : 'blue'},
         ]}>
         <Text style={styles.actionButtonText}>Prescription</Text>
       </TouchableOpacity>
@@ -70,7 +68,7 @@ const TableRowAction = ({item}) => {
         ) : (
           <VideocamOffIcon name="videocam-off" size={24} color="gray" />
         )}
-        <TouchableOpacity onPress={() => updateStatus({id})}>
+        <TouchableOpacity onPress={() => id && updateStatus({id})}>
           <BeenhereIcon
             name="beenhere"
             size={24}
@@ -94,7 +92,7 @@ const TableRowAction = ({item}) => {
       </View>
       {open && (
         <AppointmentDetails
-          isDoctor={user.role === 'patient' ? false : true}
+          isDoctor={user.role !== 'patient'}
           item={selectedItem}
           open={open}
           handleClose={handleClose}
@@ -105,38 +103,27 @@ const TableRowAction = ({item}) => {
 };
 
 const AppointmentTableRow = ({item, index}) => {
-  if (!item) {
-    return null;
-  }
+  if (!item) return null;
+
   const upcoming = isAfter(parseISO(item.date), new Date());
-  const today = isToday(parseISO(item.date), new Date());
+  const today = isToday(parseISO(item.date));
   const over = !today && isBefore(parseISO(item.date), new Date());
 
   const getColor = () => {
-    if (item?.status === 'completed') {
-      return 'green';
-    }
+    if (item?.status === 'completed') return 'green';
     if (item?.status === 'confirmed') {
-      if (upcoming) {
-        return 'blue';
-      }
-      if (today) {
-        return 'purple';
-      }
-      if (over) {
-        return 'orange';
-      }
+      if (upcoming) return 'blue';
+      if (today) return 'purple';
+      if (over) return 'orange';
     }
-    if (item?.status === 'cancelled') {
-      return 'red';
-    }
-    return '';
+    if (item?.status === 'cancelled') return 'red';
+    return 'black';
   };
 
   return (
     <View style={styles.row}>
       <Text style={styles.cell}>{index + 1}</Text>
-      <Text style={styles.cell}>{item?.patientDetails.fullName}</Text>
+      <Text style={styles.cell}>{item?.patientDetails?.fullName || 'N/A'}</Text>
       <Text style={styles.cell}>
         {format(new Date(item?.createdAt), 'M/d/yyyy')}
       </Text>
@@ -156,17 +143,21 @@ const AppointmentTableRow = ({item, index}) => {
 };
 
 const AppointmentTableBody = ({filteredDoctorAppointment}) => {
-  if (!filteredDoctorAppointment || filteredDoctorAppointment.length === 0) {
+  if (
+    !filteredDoctorAppointment ||
+    !Array.isArray(filteredDoctorAppointment) ||
+    filteredDoctorAppointment.length === 0
+  ) {
     return <Text style={styles.noDataText}>No Data</Text>;
   }
 
   return (
     <FlatList
       data={filteredDoctorAppointment}
-      renderItem={({item, index}) => (
-        <AppointmentTableRow key={item._id} item={item} index={index} />
-      )}
-      keyExtractor={item => item._id}
+      renderItem={({item, index}) =>
+        item ? <AppointmentTableRow item={item} index={index} /> : null
+      }
+      keyExtractor={item => item?._id?.toString() || Math.random().toString()}
     />
   );
 };
@@ -178,11 +169,10 @@ export default function DoctorAppointmentTable({dashboard, appointments = []}) {
     setFilterValue(data);
   };
 
-  const filteredDoctorAppointment = filterDoctorAppointments(
-    appointments,
-    filterValue,
-  );
-  console.log(filteredDoctorAppointment);
+  const filteredDoctorAppointment =
+    filterDoctorAppointments(appointments, filterValue) || [];
+  console.log('Filtered Appointments:', filteredDoctorAppointment);
+
   return (
     <View style={styles.container}>
       {!dashboard && (
@@ -191,9 +181,7 @@ export default function DoctorAppointmentTable({dashboard, appointments = []}) {
           <Picker
             selectedValue={filterValue}
             style={styles.picker}
-            onValueChange={(itemValue, itemIndex) =>
-              handleFilterValue(itemValue)
-            }>
+            onValueChange={itemValue => handleFilterValue(itemValue)}>
             <Picker.Item label="All" value="all" />
             <Picker.Item label="Accepted" value="confirmed" />
             <Picker.Item label="Completed" value="completed" />
@@ -209,18 +197,13 @@ export default function DoctorAppointmentTable({dashboard, appointments = []}) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 10,
-  },
+  container: {padding: 10},
   filterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  picker: {
-    height: 50,
-    width: 150,
-  },
+  picker: {height: 50, width: 150},
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -228,31 +211,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
   },
-  cell: {
-    flex: 1,
-    textAlign: 'center',
-  },
+  cell: {flex: 1, textAlign: 'center'},
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  actionButton: {
-    padding: 5,
-    borderRadius: 5,
-  },
-  actionButtonText: {
-    color: 'white',
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  noDataText: {
-    textAlign: 'center',
-    color: 'gray',
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
+  actionButton: {padding: 5, borderRadius: 5},
+  actionButtonText: {color: 'white'},
+  iconContainer: {flexDirection: 'row', alignItems: 'center'},
+  noDataText: {textAlign: 'center', color: 'gray'},
+  boldText: {fontWeight: 'bold'},
 });

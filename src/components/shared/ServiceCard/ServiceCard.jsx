@@ -10,8 +10,8 @@ import {
 import {useNavigation} from '@react-navigation/native';
 
 const {width} = Dimensions.get('window');
-const CARD_WIDTH = width * 0.44;
-const CARD_HEIGHT = CARD_WIDTH * 1.3;
+const CARD_WIDTH = width * 0.45;
+const CARD_HEIGHT = CARD_WIDTH * 1.2;
 
 const ServiceCard = ({item}) => {
   const navigation = useNavigation();
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   media: {
     width: '100%',
-    height: '60%',
+    height: '50%',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },

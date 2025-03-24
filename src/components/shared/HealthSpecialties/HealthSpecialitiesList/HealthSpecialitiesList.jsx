@@ -4,6 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import SpecialitiesCard from '../SpecialitiesCard/SpecialitiesCard';
 
 const HealthSpecialitiesList = ({home, filterDoctor}) => {
+  console.log(home)
   const navigation = useNavigation();
 
   if (filterDoctor.length === 0) {
@@ -24,17 +25,17 @@ const HealthSpecialitiesList = ({home, filterDoctor}) => {
         key={listKey} // 🔥 Forces re-render when number of columns changes
         data={cardItem}
         renderItem={({item}) => (
-          <SpecialitiesCard item={item} isSingle={isSingle} />
+          <SpecialitiesCard home={home} item={item} isSingle={isSingle} />
         )}
         keyExtractor={item => item?._id?.toString()}
         numColumns={isSingle ? 1 : 2} // ✅ Dynamically handled
         contentContainerStyle={styles.list}
       />
-      {home && filterDoctor.length > 8 && (
+      {home  && (
         <View style={styles.viewAllButtonContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('FindDoctors')}>
+            onPress={() => navigation.navigate('Find Doctors')}>
             <Text style={styles.buttonText}>View All</Text>
           </TouchableOpacity>
         </View>

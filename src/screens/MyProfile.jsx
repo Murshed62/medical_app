@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {useStoreActions, useStoreState} from 'easy-peasy';
-import {format} from 'date-fns';
 import ProfileAvatorCard from '../components/shared/ProfileAvatorCard/ProfileAvatorCard';
 import EditPatientProfile from '../components/shared/EditPatientProfile/EditPatientProfile';
 import ChangePassword from '../components/shared/ChangePassword/ChangePassword';
@@ -89,21 +88,17 @@ const ProfileDetails = ({patient}) => {
 
 const MyProfile = () => {
   const navigation = useNavigation();
-  // const [user, setUser] = useState(null);
   const {getPatient} = useStoreActions(action => action.patient);
   const {initializeUser} = useStoreActions(action => action.user);
   const {patient, updatedData, patientImageData} = useStoreState(
     state => state.patient,
   );
-
   const {user} = useStoreState(state => state.user);
-  console.log(user);
 
   const [open, setOpen] = useState(false);
   const [openCP, setOpenCP] = useState(false);
 
   const userID = user?._id;
-  console.log(userID);
   const userEmail = user?.email;
 
   useEffect(() => {
@@ -111,79 +106,84 @@ const MyProfile = () => {
   }, [initializeUser]);
 
   useEffect(() => {
-    console.log(user);
     if (userID) {
-      console.log('user id console kora holo', userID);
-      getPatient(userID); // Fetch patient data if user data exists
+      getPatient(userID);
     }
   }, [user, getPatient, updatedData, patientImageData, userID]);
-  console.log(patient);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleClickOpenCP = () => {
-    setOpenCP(true);
-  };
-
-  const handleCloseCP = () => {
-    setOpenCP(false);
-  };
   const handleAppointment = () => {
     navigation.navigate('MyAppointments');
   };
 
   if (!user && !patient) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
-  console.log(patient);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.profileContainer}>
-        <View style={styles.avatarContainer}>
-          <ProfileAvatorCard item={patient} />
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={handleClickOpen}>
-            <Text style={styles.buttonText}>Edit Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={handleClickOpenCP}>
-            <Text style={styles.buttonText}>Change Password</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.AppointmentButton]}
-            onPress={handleAppointment}>
-            <Text style={styles.buttonText}>Appointments</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.InvoiceButton]}
-            onPress={handleClickOpenCP}>
-            <Text style={styles.buttonText}>Invoice</Text>
-          </TouchableOpacity>
-          <OpenModal open={open} handleClose={handleClose}>
-            <EditPatientProfile handleClose={handleClose} userID={userID} />
-          </OpenModal>
-          <OpenModal handleClose={handleCloseCP} open={openCP}>
-            <ChangePassword
-              handleClose={handleCloseCP}
-              userEmail={userEmail}
-              userID={userID}
-            />
-          </OpenModal>
-        </View>
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        padding: 20,
+        backgroundColor: '#F9FAFB',
+      }}>
+      <View style={{alignItems: 'center', marginBottom: 20}}>
+        <ProfileAvatorCard item={patient} />
       </View>
+      <View style={{width: '100%', alignItems: 'center'}}>
+        {[
+          {
+            text: 'Edit Profile',
+            onPress: () => setOpen(true),
+            color: '#4F46E5',
+          },
+          {
+            text: 'Change Password',
+            onPress: () => setOpenCP(true),
+            color: '#D97706',
+          },
+          {text: 'Appointments', onPress: handleAppointment, color: '#059669'},
+          {text: 'Invoice', onPress: () => setOpenCP(true), color: '#DC2626'},
+        ].map((button, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={button.onPress}
+            style={{
+              backgroundColor: button.color,
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              borderRadius: 25,
+              marginBottom: 10,
+              width: '90%',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 5,
+            }}>
+            <Text style={{color: 'white', fontSize: 16, fontWeight: '600'}}>
+              {button.text}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <OpenModal open={open} handleClose={() => setOpen(false)}>
+        <EditPatientProfile
+          handleClose={() => setOpen(false)}
+          userID={userID}
+        />
+      </OpenModal>
+      <OpenModal open={openCP} handleClose={() => setOpenCP(false)}>
+        <ChangePassword
+          handleClose={() => setOpenCP(false)}
+          userEmail={userEmail}
+          userID={userID}
+        />
+      </OpenModal>
       <ProfileDetails patient={patient} />
     </ScrollView>
   );
@@ -262,10 +262,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#008000',
     marginTop: 20,
   },
-  InvoiceButton:{
+  InvoiceButton: {
     backgroundColor: '#FF8C00',
-  
-  }
+  },
 });
 
 export default MyProfile;

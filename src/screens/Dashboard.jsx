@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -17,15 +17,20 @@ import Services from '../components/shared/Services/Services';
 import HealthConcerns from '../components/shared/HealthConcerns/HealthConcerns';
 import HealthSpecialties from '../components/shared/HealthSpecialties/HealthSpecialties';
 import HomeBlogs from '../components/shared/HomeBlogs/HomeBlogs';
-import {useStoreState} from 'easy-peasy';
+import {useStoreActions, useStoreState} from 'easy-peasy';
 
 const Dashboard = () => {
   const {user} = useStoreState(state => state.user); // Retrieve the user
   const {profileImage} = useStoreState(state => state.profileImage); // Access profile image from Easy Peasy store
-  console.log(profileImage);
   const navigation = useNavigation();
   const [scrollY, setScrollY] = useState(new Animated.Value(0));
-
+  const {getPatient} = useStoreActions(action => action.patient);
+        const { patient, updatedData,patientImageData } = useStoreState((state) => state.patient);
+  const userID = user?._id;
+  useEffect(() => {
+    getPatient(userID);
+  }, [userID, getPatient,patientImageData]);
+  console.log('patient',patient );
   const headerBackgroundColor = scrollY.interpolate({
     inputRange: [0, 150],
     outputRange: ['transparent', 'lightblue'],
@@ -44,7 +49,7 @@ const Dashboard = () => {
       <Services />
       <HealthConcerns />
       <HealthSpecialties />
-      <HomeBlogs />
+      {/* <HomeBlogs /> */}
     </>
   );
 
@@ -78,7 +83,7 @@ const Dashboard = () => {
           }}>
           {/* Display uploaded image or fallback to userIcon */}
           <Image
-            source={profileImage ? {uri: profileImage} : userIcon}
+            source={patient ? {uri: patient?.image} : userIcon}
             style={styles.userIcon}
           />
         </TouchableOpacity>
@@ -135,16 +140,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   userIcon: {
-    width: 45,
-    height: 45,
+    width: 55,
+    height: 55,
+    marginLeft: 40,
+    borderRadius: 50,
   },
   searchContainer: {
     flex: 1,
-    marginHorizontal: 10,
+    marginHorizontal: -20,
   },
   menuIcon: {
     fontSize: 32,
     fontWeight: 'bold',
+    marginRight: 20,
   },
   listContent: {
     paddingBottom: 20,

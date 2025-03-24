@@ -33,6 +33,16 @@ import MySchedule from './src/components/DoctorComponents/MySchedule/MySchedule'
 import RequestedAppointment from './src/components/DoctorComponents/RequestedAppointment/RequestedAppointment';
 import DoctorProfile from './src/components/DoctorComponents/DoctorProfile/DoctorProfile';
 import ChangePassword from './src/components/shared/ChangePassword/ChangePassword';
+import {useNotification} from './src/notification/useNotifications';
+import AppointmentDetails from './src/components/shared/AppointmentDetails/AppointDetails';
+import {PaperProvider} from 'react-native-paper';
+import InstantVideo from './src/components/shared/InstantVideo/InstantVideo';
+import MedicineHub from './src/components/shared/MedicineHub/MedicineHub';
+import LabTesting from './src/components/shared/LabTesting/LabTesting';
+import TermsAndCondition from './src/components/shared/TermsAndCondition/TermsAndCondition';
+import PrivacyPolicy from './src/components/shared/PrivacyPolicy/PrivacyPolicy';
+import RefundPolicy from './src/components/shared/RefundPolicy/RefundPolicy';
+import AboutUs from './src/screens/AboutUs';
 
 enableScreens();
 
@@ -56,6 +66,8 @@ const DashboardStack = () => (
     <Stack.Screen name="Dashboard" component={Dashboard} />
     <Stack.Screen name="MyProfile" component={MyProfile} />
     <Stack.Screen name="MyAppointments" component={MyAppointments} />
+    <Stack.Screen name="InstantVideo" component={InstantVideo} />
+    <Stack.Screen name="AppointmentDetails" component={AppointmentDetails} />
     <Stack.Screen name="FindDoctors" component={FindDoctors} />
     <Stack.Screen name="BookAppointment" component={BookAppointment} />
     <Stack.Screen name="PaymentPage" component={PaymentPage} />
@@ -84,7 +96,7 @@ const TabNavigator = () => (
       options={{tabBarIcon: () => <Image source={searchIcon} />}}
     />
     <Tab.Screen
-      name="MyProfile"
+      name="My Profile"
       component={MyProfile}
       options={{tabBarIcon: () => <Image source={profileIcon} />}}
     />
@@ -143,10 +155,10 @@ const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       initialRouteName={
-        user
-          ? user.role === 'patient'
-            ? 'TabNavigator'
-            : 'DoctorStack'
+        user?.role === 'patient'
+          ? 'TabNavigator'
+          : user?.role === 'doctor'
+          ? 'DoctorStack'
           : 'Auth'
       }
       screenOptions={{headerShown: false}}>
@@ -167,15 +179,51 @@ const DrawerNavigator = () => {
             component={TabNavigator}
             options={{title: 'Dashboard'}}
           />
-          <Drawer.Screen
-            name="DoctorAppointmentTable"
-            component={DoctorAppointmentTable}
+          {/* <Drawer.Screen
+            name="MyAppointments"
+            component={MyAppointments}
             options={{title: 'My Appointments'}}
+          /> */}
+          <Drawer.Screen
+            name="InstantVideo"
+            component={InstantVideo}
+            options={{title: 'Instant Video Call'}}
           />
+
           <Drawer.Screen
             name="HealthHub"
             component={HealthHub}
-            options={{title: 'HealthHub'}}
+            options={{title: 'Health Hub'}}
+          />
+          <Drawer.Screen
+            name="MedicineHub"
+            component={MedicineHub}
+            options={{title: 'Medicine Hub'}}
+          />
+          <Drawer.Screen
+            name="LabTesting"
+            component={LabTesting}
+            options={{title: 'Lab Testing'}}
+          />
+          <Drawer.Screen
+            name="TermsAndCondition"
+            component={TermsAndCondition}
+            options={{title: 'Terms And Condition'}}
+          />
+          <Drawer.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicy}
+            options={{title: 'Privacy Policy'}}
+          />
+          <Drawer.Screen
+            name="RefundPolicy"
+            component={RefundPolicy}
+            options={{title: 'Refund Policy'}}
+          />
+          <Drawer.Screen
+            name="AboutUs"
+            component={AboutUs}
+            options={{title: 'About Us'}}
           />
         </>
       )}
@@ -225,12 +273,15 @@ const DrawerNavigator = () => {
 
 // ✅ **Main App Component**
 const App = () => {
+  useNotification();
   return (
-    <NavigationContainer>
-      <StoreProvider store={store}>
-        <DrawerNavigator />
-      </StoreProvider>
-    </NavigationContainer>
+    <PaperProvider>
+      <NavigationContainer>
+        <StoreProvider store={store}>
+          <DrawerNavigator />
+        </StoreProvider>
+      </NavigationContainer>
+    </PaperProvider>
   );
 };
 

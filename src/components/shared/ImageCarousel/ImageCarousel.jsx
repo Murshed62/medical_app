@@ -1,8 +1,8 @@
 import {View, Text, Dimensions, StyleSheet, Image} from 'react-native';
 import React from 'react';
 import Carousel from 'react-native-reanimated-carousel';
-import bannerOne from '../../../assets/SL_promo_poster.png';
-import bannerTwo from '../../../assets/SL_promo_poster.jpg';
+import bannerOne from '../../../assets/pOne.jpg';
+import bannerTwo from '../../../assets/pTwo.png';
 
 const ImageCarousel = () => {
   const width = Dimensions.get('window').width;

@@ -19,22 +19,25 @@ import AppointmentDetails from '../AppointmentDetails/AppointDetails';
 import {DataTable} from 'react-native-paper';
 import videoOn from '../../../assets/video-camera.png';
 import videoOff from '../../../assets/video-camera-off.png';
+import {useNavigation} from '@react-navigation/native';
 
 const TableRowAction = ({item}) => {
+  const navigation = useNavigation();
   const user = AsyncStorage.getItem('user');
   const {deletePatientAppointment} = useStoreActions(action => action.patient);
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const handleClickOpen = item => {
-    setSelectedItem(item);
-    setOpen(true);
-  };
+  // const handleClickOpen = item => {
+  //   setSelectedItem(item);
+  //   // setOpen(true);
+  //   navigation.navigate('AppointmentDetails', { selectedItem: selectedItem });
+  // };
 
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedItem(null);
-  };
+  // const handleClose = () => {
+  //   setOpen(false);
+  //   setSelectedItem(null);
+  // };
 
   if (!item) return null;
 
@@ -44,7 +47,7 @@ const TableRowAction = ({item}) => {
   return (
     <View style={styles.actionRow}>
       <TouchableOpacity
-        onPress={() => handleClickOpen(item)}
+        onPress={() => navigation.navigate('AppointmentDetails', {appointment: item})}
         disabled={
           item?.status === 'panding' || item?.status === 'cancelled' || upcoming
         }
@@ -54,6 +57,17 @@ const TableRowAction = ({item}) => {
         ]}>
         <Text style={styles.buttonText}>Prescription</Text>
       </TouchableOpacity>
+      {/* <TouchableOpacity
+        onPress={() => handleClickOpen(item)}
+        disabled={
+          item?.status === 'panding' || item?.status === 'cancelled' || upcoming
+        }
+        style={[
+          styles.button,
+          {backgroundColor: item?.status === 'panding' ? '#d32f2f' : '#1976d2'},
+        ]}>
+        <Text style={styles.buttonText}>Prescription</Text>
+      </TouchableOpacity> */}
 
       {today &&
       item?.status !== 'completed' &&
@@ -64,24 +78,6 @@ const TableRowAction = ({item}) => {
         </TouchableOpacity>
       ) : (
         <Image source={videoOff} style={{marginLeft: 4}} />
-      )}
-
-      {open && (
-        <Modal transparent visible={open}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              {/* <AppointmentDetails
-                isDoctor={user.role == 'patient' ? false : true}
-                item={selectedItem}
-                open={open}
-                handleClose={handleClose}
-              /> */}
-              <TouchableOpacity onPress={handleClose}>
-                <Text style={{color: 'red'}}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       )}
     </View>
   );

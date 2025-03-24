@@ -47,7 +47,7 @@ const MyAppointments = () => {
   const handleFilterValue = data => {
     setFilterValue(data);
   };
-
+  console.log('filter data',filterValue);
   return (
     <View style={styles.container}>
       <FilterValue
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 40,
     marginBottom: 16,
   },
 });
